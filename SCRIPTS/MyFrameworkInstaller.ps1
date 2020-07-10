@@ -24,51 +24,68 @@
 #>
 ################################# Script start here #################################
 
-$MyProjectFolderPath = "D:\DATA\DOCUMENTS\MyProjects"
+$SettingsPath = "$(split-path (split-path $PSCommandPath -Parent) -Parent)\SETTINGS\Settings.ps1"
+. $SettingsPath
 
-if (-not (Test-Path $MyProjectFolderPath) ) {
-    New-Item -Path $MyProjectFolderPath  -ItemType Directory -Force
+if (-not (Test-Path $Global:MyProjectFolderPath) ) {
+    New-Item -Path $Global:MyProjectFolderPath  -ItemType Directory -Force
 }
 
-$ProjectsFolderPath        = "$MyProjectFolderPath\PROJECTS"
+$ProjectsFolderPath        = "$($Global:MyProjectFolderPath)\Projects"
 if (-not (Test-Path $ProjectsFolderPath) ) {
     New-Item -Path $ProjectsFolderPath  -ItemType Directory -Force
 }
 
-$ProjectServicesFolderPath = "$MyProjectFolderPath\ProjectServices"
+$ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
 if (-not (Test-Path $ProjectServicesFolderPath) ) {
     New-Item -Path $ProjectServicesFolderPath  -ItemType Directory -Force
 }
 
-$OtherProjectsFolderPath   = "$MyProjectFolderPath\OtherProjects"
+$OtherProjectsFolderPath   = "$($Global:MyProjectFolderPath)\OtherProjects"
 if (-not (Test-Path $OtherProjectsFolderPath) ) {
     New-Item -Path $OtherProjectsFolderPath  -ItemType Directory -Force
 }
 
-$GlobalSettingsURL = "https://github.com/Alex-0293/GlobalSettings"
-Set-Location $ProjectsFolderPath
-$ git.exe clone $GlobalSettingsURL
 
-$GlobalSettingsEmptyFile = Get-Content -Path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1"
-$ToReplace               = '[string] $Global:MyProjectFolderPath = ""'
-$ReplaceBy               = '[string] $Global:MyProjectFolderPath = ' + $MyProjectFolderPath
-$GlobalSettingsEmptyFile = $GlobalSettingsEmptyFile.Replace($ToReplace, $ReplaceBy)
-$GlobalSettingsEmptyFile | Out-File -FilePath "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1" -Force
+if (-not (test-path "$ProjectsFolderPath\GlobalSettings")){    
+    Set-Location $ProjectsFolderPath
+    & git.exe clone $Global:GlobalSettingsURL
+    $GlobalSettingsEmptyFile = Get-Content -Path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1"
+    $ToReplace               = '[string] $Global:MyProjectFolderPath = ""'
+    $ReplaceBy               = '[string] $Global:MyProjectFolderPath = "' + $Global:MyProjectFolderPath + '"'
+    $GlobalSettingsEmptyFile = $GlobalSettingsEmptyFile.Replace($ToReplace, $ReplaceBy)
+    $GlobalSettingsEmptyFile | Out-File -FilePath "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings.ps1" -Force
+} 
+
+
 
 $GlobalSettingsScriptPath = "$ProjectsFolderPath\GlobalSettings\SCRIPTS"
 
-$Res = Import-Module -Name Sudo -PassThru -Force
-if (-not $Res) {
+if (-not (get-command "gsudo")) {
     Set-ExecutionPolicy RemoteSigned -Scope Process
-    $SudoInstall = Invoke-WebRequest -UseBasicParsing "https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1"
-    Invoke-Expression $SudoInstall
-    $Res = Import-Module -Name Sudo -PassThru -Force 
+    $GSudoInstall = Invoke-WebRequest -UseBasicParsing $Global:GSudoInstallURL
+    Invoke-Expression $GSudoInstall
 }
 
-if ($Res) { 
-    gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkInitScript' , \""$GlobalSettingsScriptPath\Init.ps1\"", [EnvironmentVariableTarget]::Machine )"    
-    gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkGlobalInitScript' , \""$GlobalSettingsScriptPath\InitGlobal.ps1\"", [EnvironmentVariableTarget]::Machine )"  
+gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkInitScript' , \""$GlobalSettingsScriptPath\Init.ps1\"", [EnvironmentVariableTarget]::Machine )"    
+gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkGlobalInitScript' , \""$GlobalSettingsScriptPath\InitGlobal.ps1\"", [EnvironmentVariableTarget]::Machine )"  
+
+if (-not (test-path "$ModulePath\AlexkUtils")){
+    Set-Location -path $ModulePath
+    gsudo git.exe clone $AlexKUtilsModuleURL 
 }
+
+if (-not (test-path "$ProjectServicesFolderPath\GitHubRepositoryClone")){    
+    Set-Location $ProjectServicesFolderPath
+    & git.exe clone $Global:GitHubRepositoryCloneURL
+} 
+
+& git.exe config --global user.name  $Global:GitUserName
+& git.exe config --global user.email "1928311@tuta.io" 
+
+write-host "Restart VSCode to refresh environments." -ForegroundColor Green
+
+. "$ProjectServicesFolderPath\GitHubRepositoryClone\SCRIPTS\GitHubRepositoryClone.ps1"
 
 ################################# Script end here ###################################
 
