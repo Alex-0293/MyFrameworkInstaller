@@ -46,6 +46,11 @@ if (-not (Test-Path $OtherProjectsFolderPath) ) {
     New-Item -Path $OtherProjectsFolderPath  -ItemType Directory -Force
 }
 
+$DisabledProjectsFolderPath = "$($Global:MyProjectFolderPath)\DisabledProjects"
+if (-not (Test-Path $DisabledProjectsFolderPath) ) {
+    New-Item -Path $DisabledProjectsFolderPath  -ItemType Directory -Force
+}
+
 
 if (-not (test-path "$ProjectsFolderPath\GlobalSettings")){    
     Set-Location $ProjectsFolderPath
