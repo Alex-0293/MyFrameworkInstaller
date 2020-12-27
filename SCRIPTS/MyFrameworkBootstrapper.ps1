@@ -453,7 +453,6 @@ if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom
         $Global:MyProjectFolderPath = $Global:MyProjectFolderPath.Substring(0,($Global:MyProjectFolderPath.Length - 1))
     }
     $Global:MyProjectFolderPath = $Global:MyProjectFolderPath + "\MyProjects" 
-    write-host "Creating folder [$Global:MyProjectFolderPath]." -ForegroundColor green
     if ( !(test-path $Global:MyProjectFolderPath) ){
         try {
             New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
@@ -472,7 +471,6 @@ if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom
     }
 }
 Else {
-    write-host "Creating folder [$Global:MyProjectFolderPath]." -ForegroundColor green
     if ( !(test-path $Global:MyProjectFolderPath) ){
         try {
             New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
@@ -538,7 +536,7 @@ If ( $GitURI ) {
 start-sleep -Seconds 10
 write-host "2. Clone my framework installer"
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
-if ( !test-path -path $ProjectServicesFolderPath ){
+if ( !(test-path -path $ProjectServicesFolderPath) ){
     try {
         New-Item -Path $ProjectServicesFolderPath -ItemType Directory
     }
