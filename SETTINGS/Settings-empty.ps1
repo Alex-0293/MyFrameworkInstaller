@@ -9,18 +9,15 @@
 [uri] $Global:AlexKBuildToolsModuleURL = "https://github.com/Alex-0293/AlexKBuildTools"
 
 #WMF5.1
-[uri]    $Global:WMF5_2012R2_64 = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=54616&6B49FDFB-8E5B-4B07-BC31-15695C5A2143=1"
-[string] $Global:WMF5FileName   = "$($Env:TEMP)\WMF5.msu"
+[uri]    $Global:WMF5_2012R2_64 = "https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win8.1AndW2K12R2-KB3191564-x64.msu"
 
 #VSCode
 [uri] $global:VSCode64URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
 [uri] $global:VSCode32URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-user"
-[string] $Global:VSCodeFileName = "$($Env:TEMP)\VSCodeInstall.exe"
 
 #Powershell7
 [uri] $global:Powershell764URI       = "https://github.com/PowerShell/PowerShell/releases/download/v7.1.0/PowerShell-7.1.0-win-x64.msi"
 [uri] $global:Powershell732URI       = "https://github.com/PowerShell/PowerShell/releases/download/v7.1.0/PowerShell-7.1.0-win-x86.msi"
-[string] $Global:Powershell7FileName = "$($Env:TEMP)\Powershell7Install.exe"
 
 [bool]  $Global:LocalSettingsSuccessfullyLoaded  = $true
 
