@@ -471,6 +471,25 @@ if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom
         Write-host "Folder path [$($Global:MyProjectFolderPath)] already exist." -ForegroundColor Green
     }
 }
+Else {
+    write-host "Creating folder [$Global:MyProjectFolderPath]." -ForegroundColor green
+    if ( !(test-path $Global:MyProjectFolderPath) ){
+        try {
+            New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+        }
+        Catch {
+            try {
+                gsudo New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+            }
+            Catch {            
+                Write-host "Folder path [$($Global:MyProjectFolderPath)] cannot be created! $_" -ForegroundColor Red
+            }
+        }
+    }
+    Else {
+        Write-host "Folder path [$($Global:MyProjectFolderPath)] already exist." -ForegroundColor Green
+    }
+}
 
 [string] $Global:GitUserName         = Get-Answer -Title "Enter your git user name: " -Color "Cyan","DarkMagenta" -AddNewLine
 [string] $Global:GitEmail            = Get-Answer -Title "Enter your git email: " -Color "Cyan","DarkMagenta" -AddNewLine
