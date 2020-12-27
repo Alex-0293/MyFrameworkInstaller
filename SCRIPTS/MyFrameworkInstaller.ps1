@@ -160,7 +160,7 @@ Function Start-Programm {
 
 }
 #remove it
-$OSBit = 64
+#$OSBit = 64
 
 $SettingsPath = "$(split-path (split-path $PSCommandPath -Parent) -Parent)\SETTINGS\Settings.ps1"
 . $SettingsPath
@@ -202,76 +202,99 @@ if ( $PSVer -lt 5 ) {
     }
 }
 
-$Answer = Get-Answer -Title "Do you want to install powershell version 7? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
-if ( $Answer -eq "Y" ) {
-    write-host "Install Powershell 7."
-    $Powershell7URI = (Get-Variable -name "Powershell7$($OSBit)URI").Value
-    $Global:Powershell7FileName = "$($Env:TEMP)\$(split-path -path $Powershell7URI -Leaf)"
-    If ( $Powershell7URI ) {
-        if ( test-path -path $Global:Powershell7FileName ){
-            Remove-Item -Path $Global:Powershell7FileName
-        }
+$PSMaximumVer = ($psversiontable.PSCompatibleVersions.major | Measure-Object -max | Select-Object maximum).Maximum
+if ( $PSMaximumVer -ge 7 ){
+    $IsPS7Installed = $True
+}
+Else {
+    $IsPS7Installed = $False
+}
+if ( !$IsPS7Installed ) {
+    $Answer = Get-Answer -Title "Do you want to install powershell version 7? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
+    if ( $Answer -eq "Y" ) {
+        write-host "Install Powershell 7."
+        $Powershell7URI = (Get-Variable -name "Powershell7$($OSBit)URI").Value
+        $Global:Powershell7FileName = "$($Env:TEMP)\$(split-path -path $Powershell7URI -Leaf)"
+        If ( $Powershell7URI ) {
+            if ( test-path -path $Global:Powershell7FileName ){
+                Remove-Item -Path $Global:Powershell7FileName
+            }
 
-        Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
-        if ( test-path -path $Global:Powershell7FileName ){
-            Unblock-File -path $Global:Powershell7FileName            
-            $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/quiet','/qn','/norestart') -Description "    Installing Powershell 7."
-            if (!$res){
-                start-sleep -Seconds 10
-                exit 1
-            } 
-        }
-        Else {
-            Write-Host "Error downloading file [$Global:Powershell7FileName]!" -ForegroundColor Red
-        }
-    }  
+            Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
+            if ( test-path -path $Global:Powershell7FileName ){
+                Unblock-File -path $Global:Powershell7FileName            
+                $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/quiet','/qn','/norestart') -Description "    Installing Powershell 7."
+                if (!$res){
+                    start-sleep -Seconds 10
+                    exit 1
+                } 
+            }
+            Else {
+                Write-Host "Error downloading file [$Global:Powershell7FileName]!" -ForegroundColor Red
+            }
+        }  
+        $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
+    }
+    Else{
+        $Global:PowershellModulePath  = "c:\program files\powershell\Modules"
+    }
+}
+Else {
     $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
 }
-Else{
-    $Global:PowershellModulePath  = "c:\program files\powershell\Modules"
-}
 
-$Answer = Get-Answer -Title "Do you want to install VSCode? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
-if ( $Answer -eq "Y" ) {
-    write-host "3. Install VSCode."
-    $VSCodeURI = (Get-Variable -name "VSCode$($OSBit)URI").Value
-    $Global:VSCodeFileName = "$($Env:TEMP)\VSCode.exe"
-    If ( $VSCodeURI ) {
-        if ( test-path -path $Global:VSCodeFileName ){
-            Remove-Item -Path $Global:VSCodeFileName
-        }
+$CodeCommand = Get-Command "Code"
+if ( !$CodeCommand ) {
+    $Answer = Get-Answer -Title "Do you want to install VSCode? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
+    if ( $Answer -eq "Y" ) {
+        write-host "3. Install VSCode."
+        $VSCodeURI = (Get-Variable -name "VSCode$($OSBit)URI").Value
+        $Global:VSCodeFileName = "$($Env:TEMP)\VSCode.exe"
+        If ( $VSCodeURI ) {
+            if ( test-path -path $Global:VSCodeFileName ){
+                Remove-Item -Path $Global:VSCodeFileName
+            }
 
-        $res = Invoke-WebRequest -Uri $VSCodeURI -OutFile $Global:VSCodeFileName -PassThru
-        $OldName = $Global:VSCodeFileName
-        $FileName = $res.headers."Content-Disposition".split("`"")[1]
-        $Global:VSCodeFileName = "$($Env:TEMP)\$FileName"
-        rename-item -Path $OldName -NewName $Global:VSCodeFileName
+            $res = Invoke-WebRequest -Uri $VSCodeURI -OutFile $Global:VSCodeFileName -PassThru
+            $OldName = $Global:VSCodeFileName
+            $FileName = $res.headers."Content-Disposition".split("`"")[1]
+            $Global:VSCodeFileName = "$($Env:TEMP)\$FileName"
+            rename-item -Path $OldName -NewName $Global:VSCodeFileName
 
-        if ( test-path -path $Global:VSCodeFileName ){
-            Unblock-File -path $Global:VSCodeFileName
-            $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent') -Description "    Installing VSCode."
-            if (!$res){
-                start-sleep -Seconds 10
-                exit 1
+            if ( test-path -path $Global:VSCodeFileName ){
+                Unblock-File -path $Global:VSCodeFileName
+                $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent') -Description "    Installing VSCode."
+                if (!$res){
+                    start-sleep -Seconds 10
+                    exit 1
+                }
+            }
+            Else {
+                Write-Host "Error downloading file [$Global:VSCodeFileName]!" -ForegroundColor Red
             }
         }
-        Else {
-            Write-Host "Error downloading file [$Global:VSCodeFileName]!" -ForegroundColor Red
-        }
-    }  
+    }
+}
 
-    write-host "4. Config VSCode."
-    write-host "   install powershell extention"
-    & code --install-extension ms-vscode.powershell
-    write-host "   install icon pack"
-    & code --install-extension pkief.material-icon-theme
-    write-host "   create VSCode user config"
-    Set-Content -path $Global:VSCodeConfigFilePath -Value $Global:VSCodeConfig -Force
-    write-host "   create MyProject folder"
-    New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
-    write-host "   create MyProject\Projects folder"
-    New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory
-    $StartVSCode = $True    
+$Answer = Get-Answer -Title "Do you want to configure VSCode? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
+if ( $Answer -eq "Y" ) {
+    if ( $CodeCommand ) {
+        write-host "4. Config VSCode."
+        write-host "   install powershell extention"
+        & code --install-extension ms-vscode.powershell
+        write-host "   install icon pack"
+        & code --install-extension pkief.material-icon-theme
+        write-host "   create VSCode user config"
+        Set-Content -path $Global:VSCodeConfigFilePath -Value $Global:VSCodeConfig -Force
+        write-host "   create MyProject folder"
+        New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+        write-host "   create MyProject\Projects folder"
+        New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory
+        $StartVSCode = $True    
+    }
+    Else {
+        Write-Host "Code not found!" -ForegroundColor red
+    }
 }
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
