@@ -126,8 +126,7 @@ Function Start-Programm {
         write-host $Description -ForegroundColor Green
     }
 
-
-    $Res = Start-Process $Programm -Wait -ArgumentList $Arguments -PassThru
+    $Res = Start-Process $Programm -Wait -PassThru -ArgumentList $Arguments 
 
     if ($Res.HasExited) {
         switch ( $Res.ExitCode ) {
@@ -162,6 +161,7 @@ if ( $PSVer -lt 5 ) {
         $InstallWMF5 = $true
         if ( $OSVer -and $OSBit ) {
             $WMF5 = (Get-Variable -name "WMF5_$($OSVer)_$($OSBit)").Value
+            $Global:WMF5FileName = "$($Env:TEMP)\$(split-path -path $WMF5 -Leaf)"
             If ( $WMF5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Remove-Item -Path $Global:WMF5FileName
@@ -169,9 +169,10 @@ if ( $PSVer -lt 5 ) {
 
                 Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
                 if ( test-path -path $Global:WMF5FileName ){
-                    Unblock-File -path $Global:WMF5FileName
-                    $res = Start-Programm -Programm "wusa.exe" -Arguments @("$Global:WMF5FileName",'/quiet','/norestart') -Description "    Installing WMF 5.1."
+                    Unblock-File -path $Global:WMF5FileName                    
+                    $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet','/norestart') -Description "    Installing WMF 5.1."
                     if (!$res){
+                        start-sleep -Seconds 10
                         exit 1
                     }                    
                 }
@@ -191,6 +192,7 @@ $Answer = Get-Answer -Title "Do you want to install powershell version 7? " -Cho
 if ( $Answer -eq "Y" ) {
     write-host "Install Powershell 7."
     $Powershell7URI = (Get-Variable -name "Powershell7$($OSBit)URI").Value
+    $Global:Powershell7FileName = "$($Env:TEMP)\$(split-path -path $Powershell7URI -Leaf)"
     If ( $Powershell7URI ) {
         if ( test-path -path $Global:Powershell7FileName ){
             Remove-Item -Path $Global:Powershell7FileName
@@ -198,9 +200,10 @@ if ( $Answer -eq "Y" ) {
 
         Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
         if ( test-path -path $Global:Powershell7FileName ){
-            Unblock-File -path $Global:Powershell7FileName
-            $res = Start-Programm -Programm "msiexec" -Arguments @('/i',"$Global:Powershell7FileName",'/quiet','/qn','/norestart') -Description "    Installing Powershell 7."
+            Unblock-File -path $Global:Powershell7FileName            
+            $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/quiet','/qn','/norestart') -Description "    Installing Powershell 7."
             if (!$res){
+                start-sleep -Seconds 10
                 exit 1
             } 
         }
@@ -218,16 +221,23 @@ $Answer = Get-Answer -Title "Do you want to install VSCode? " -ChooseFrom "y","n
 if ( $Answer -eq "Y" ) {
     write-host "3. Install VSCode."
     $VSCodeURI = (Get-Variable -name "VSCode$($OSBit)URI").Value
+    $Global:VSCodeFileName = "$($Env:TEMP)\VSCode.exe"
     If ( $VSCodeURI ) {
         if ( test-path -path $Global:VSCodeFileName ){
             Remove-Item -Path $Global:VSCodeFileName
         }
 
-        Invoke-WebRequest -Uri $VSCodeURI -OutFile $Global:VSCodeFileName
+        $res = Invoke-WebRequest -Uri $VSCodeURI -OutFile $Global:VSCodeFileName -PassThru
+        $OldName = $Global:VSCodeFileName
+        $FileName = $res.headers."Content-Disposition".split("`"")[1]
+        $Global:VSCodeFileName = "$($Env:TEMP)\$FileName"
+        rename-item -Path $OldName -NewName $Global:VSCodeFileName
+
         if ( test-path -path $Global:VSCodeFileName ){
             Unblock-File -path $Global:VSCodeFileName
             $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent') -Description "    Installing VSCode."
             if (!$res){
+                start-sleep -Seconds 10
                 exit 1
             }
         }
