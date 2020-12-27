@@ -118,7 +118,7 @@ $SettingsPath = "$(split-path (split-path $PSCommandPath -Parent) -Parent)\SETTI
 . $SettingsPath
 
 write-host "Check powershell version."
-$PSVer = $PSVersionTable.PSVersion.major.ToInt16()
+$PSVer = [int16] $PSVersionTable.PSVersion.major
 write-host "    Powershel version [$PSVer]."
 if ( $PSVer -lt 5 ) {
     $Answer = Get-Answer -Title "Do you want to update host powershell version [$PSVer] to [5]? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
