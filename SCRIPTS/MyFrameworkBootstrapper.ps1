@@ -515,7 +515,7 @@ If ( $GitURI ) {
         Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
     }
 }    
-
+start-sleep -Seconds 10
 write-host "2. Clone my framework installer"
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
 if ( !test-path -path $ProjectServicesFolderPath ){
@@ -531,13 +531,14 @@ if ( !test-path -path $ProjectServicesFolderPath ){
         }
     }
 }
+
 Set-Location -Path $ProjectServicesFolderPath
 & git clone $Global:MyFrameworkInstaller
 
 
 Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
 Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"
-
+start-sleep -Seconds 10
 $MyFrameworkInstaller = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
 write-host "Starting [$MyFrameworkInstallerPart0]." -ForegroundColor Green
 . $MyFrameworkInstaller
