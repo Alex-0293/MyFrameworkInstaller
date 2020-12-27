@@ -325,8 +325,6 @@ Function Get-Answer {
 
 }
 
-Clear-Host
-
 #Git
 [uri] $global:Git64URI       = "https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.3/Git-2.29.2.3-64-bit.exe"
 [uri] $global:Git32URI       = "https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.3/Git-2.29.2.3-32-bit.exe"
@@ -358,7 +356,7 @@ $Data += $PSO
 
 $Global:MyProjectFolderPath = $null
 
-$Global:MyProjectFolderPath = (Show-ColoredTable -Data $Data -View "FullName" -Title "Path options:" -AddRowNumbers -PassThru -Color   "Cyan","DarkMagenta", "Magenta" -SelectMessage "Select Myproject path: " -SelectField "FullName" -AddNewLine).FullName
+$Global:MyProjectFolderPath = (Show-ColoredTable -Data $Data -View "FullName" -Title "Path options:" -AddRowNumbers -PassThru -Color   "Cyan","DarkMagenta", "Magenta" -SelectMessage "Select MyProject path: " -SelectField "FullName" -AddNewLine).FullName
 
 if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom") ){
     $Global:MyProjectFolderPath = Get-Answer -Title "Enter custom MyProjects folder path (like: c:\data): " -Color "Cyan","DarkMagenta" -AddNewLine

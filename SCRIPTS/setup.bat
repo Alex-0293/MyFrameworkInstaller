@@ -1,4 +1,1 @@
-$Global:MyFrameworkBootstrapperIRI = ""
-Set-ExecutionPolicy RemoteSigned -Scope Process
-$MyFrameworkBootstrapper = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkBootstrapperIRI
-Invoke-Expression $MyFrameworkBootstrapper
+powershell -executionpolicy bypass -Command "& { $Global:MyFrameworkBootstrapperURI = 'https://raw.githubusercontent.com/Alex-0293/MyFrameworkInstaller/master/SCRIPTS/MyFrameworkBootstrapper.ps1'; $MyFrameworkBootstrapper = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkBootstrapperURI; Invoke-Expression $MyFrameworkBootstrapper;}"
