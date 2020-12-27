@@ -378,6 +378,42 @@ Function Get-Answer {
 
 }
 
+Function Start-Programm {
+    param (
+        [string] $Programm,
+        [string[]] $Arguments,
+        [string] $Description
+    )
+
+    $Success = $true
+
+    if ( $Description ){
+        write-host $Description -ForegroundColor Green
+    }
+
+
+    $Res = Start-Process $Programm -Wait -ArgumentList $Arguments -PassThru
+
+    if ($Res.HasExited) {
+        switch ( $Res.ExitCode ) {
+            0 { 
+                Write-host "Successfully finished." -ForegroundColor green                
+            }
+            Default { 
+                Write-host "Error occured!" -ForegroundColor red
+                $Success = $false
+            }
+        }
+    }
+    Else {
+        Write-host "Error occured!" -ForegroundColor red
+        $Success = $false
+    }
+
+    Return $Success
+
+}
+
 #Git
 [uri] $global:Git64URI       = "https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.3/Git-2.29.2.3-64-bit.exe"
 [uri] $global:Git32URI       = "https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.3/Git-2.29.2.3-32-bit.exe"
@@ -470,8 +506,10 @@ If ( $GitURI ) {
     Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
     if ( test-path -path $Global:GitFileName ){
         Unblock-File -path $Global:GitFileName
-        write-host "    Installing Git."
-        & $Global:GitFileName /silent 
+        $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
+        if (!$res){
+            exit 1
+        }
     }
     Else {
         Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
