@@ -511,9 +511,6 @@ switch -Wildcard ( $OSInfo.OSArchitecture ) {
     }
 }
 
-
-
-
 write-host "1. Install Git."
 $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
 If ( $GitURI ) {
@@ -533,7 +530,6 @@ If ( $GitURI ) {
         Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
     }
 }    
-start-sleep -Seconds 10
 write-host "2. Clone my framework installer"
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
 if ( !(test-path -path $ProjectServicesFolderPath) ){
@@ -556,9 +552,9 @@ Set-Location -Path $ProjectServicesFolderPath
 
 Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
 Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"
-start-sleep -Seconds 10
 $MyFrameworkInstaller = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
 write-host "Starting [$MyFrameworkInstallerPart0]." -ForegroundColor Green
+start-sleep -Seconds 10
 . $MyFrameworkInstaller
 ################################# Script end here ###################################
 
