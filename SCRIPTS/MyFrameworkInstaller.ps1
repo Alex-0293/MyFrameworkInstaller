@@ -371,6 +371,6 @@ if ( $StartVSCode ){
     Set-Location -Path $Global:MyProjectFolderPath
     & code "`"$($Global:MyProjectFolderPath)`""
 }
-
+Stop-Transcript
 ################################# Script end here ###################################
 

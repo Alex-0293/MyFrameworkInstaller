@@ -413,6 +413,7 @@ Function Start-Programm {
     Return $Success
 
 }
+Start-Transcript
 
 #Git
 [uri] $global:Git64URI       = "https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.3/Git-2.29.2.3-64-bit.exe"
