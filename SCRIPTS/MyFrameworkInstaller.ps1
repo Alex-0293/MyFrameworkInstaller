@@ -126,7 +126,7 @@ if ( $PSVer -lt 5 ) {
     if ( $Answer -eq "Y" ) {
         $InstallWMF5 = $true
         if ( $OSVer -and $OSBit ) {
-            $WMF5 = Get-Variable -name "WMF5_$OSVer_$OSBit"
+            $WMF5 = Get-Variable -name "WMF5_$($OSVer)_$($OSBit)"
             If ( $WMF5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Remove-Item -Path $Global:WMF5FileName

@@ -553,8 +553,8 @@ Set-Location -Path $ProjectServicesFolderPath
 Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
 Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"
 $MyFrameworkInstaller = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
-write-host "Starting [$MyFrameworkInstallerPart0]." -ForegroundColor Green
-start-sleep -Seconds 10
+write-host "Starting [$MyFrameworkInstaller]." -ForegroundColor Green
+
 . $MyFrameworkInstaller
 ################################# Script end here ###################################
 
