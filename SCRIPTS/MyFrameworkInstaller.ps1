@@ -126,7 +126,7 @@ if ( $PSVer -lt 5 ) {
     if ( $Answer -eq "Y" ) {
         $InstallWMF5 = $true
         if ( $OSVer -and $OSBit ) {
-            $WMF5 = Get-Variable -name "Global:WMF5_$OSVer_$OSBit"
+            $WMF5 = Get-Variable -name "WMF5_$OSVer_$OSBit"
             If ( $WMF5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Remove-Item -Path $Global:WMF5FileName
@@ -153,7 +153,7 @@ if ( $PSVer -lt 5 ) {
 $Answer = Get-Answer -Title "Do you want to install powershell version 7? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
 if ( $Answer -eq "Y" ) {
     write-host "Install Powershell 7."
-    $Powershell7URI = Get-Variable -name "Global:Powershell7$($OSBit)URI"
+    $Powershell7URI = Get-Variable -name "Powershell7$($OSBit)URI"
     If ( $Powershell7URI ) {
         if ( test-path -path $Global:Powershell7FileName ){
             Remove-Item -Path $Global:Powershell7FileName
@@ -178,7 +178,7 @@ Else{
 $Answer = Get-Answer -Title "Do you want to install VSCode? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
 if ( $Answer -eq "Y" ) {
     write-host "3. Install VSCode."
-    $VSCodeURI = Get-Variable -name "Global:VSCode$($OSBit)URI"
+    $VSCodeURI = Get-Variable -name "VSCode$($OSBit)URI"
     If ( $VSCodeURI ) {
         if ( test-path -path $Global:VSCodeFileName ){
             Remove-Item -Path $Global:VSCodeFileName
