@@ -390,24 +390,35 @@ Function Start-Programm {
     if ( $Description ){
         write-host $Description -ForegroundColor Green
     }
+    $Command = get-command $Programm
+    
+    if ( $Command ) {
+        if ( $Command.path ) {
+            $ProgPath = $Command.path
+            $Res = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments 
 
-
-    $Res = Start-Process $Programm -Wait -ArgumentList $Arguments -PassThru
-
-    if ($Res.HasExited) {
-        switch ( $Res.ExitCode ) {
-            0 { 
-                Write-host "Successfully finished." -ForegroundColor green                
+            if ($Res.HasExited) {
+                switch ( $Res.ExitCode ) {
+                    0 { 
+                        Write-host "Successfully finished." -ForegroundColor green                
+                    }
+                    Default { 
+                        Write-host "Error occured!" -ForegroundColor red
+                        $Success = $false
+                    }
+                }
             }
-            Default { 
+            Else {
                 Write-host "Error occured!" -ForegroundColor red
                 $Success = $false
             }
         }
+        else{
+            Write-host "Command [$Programm] not found!" -ForegroundColor red
+        }
     }
-    Else {
-        Write-host "Error occured!" -ForegroundColor red
-        $Success = $false
+    else{
+        Write-host "Command [$Programm] not found!" -ForegroundColor red
     }
 
     Return $Success
@@ -512,25 +523,31 @@ switch -Wildcard ( $OSInfo.OSArchitecture ) {
     }
 }
 
-write-host "1. Install Git."
-$GitURI = (Get-Variable -name "Git$($OSBit)URI").value
-If ( $GitURI ) {
-    if ( test-path -path $Global:GitFileName ){
-        Remove-Item -Path $Global:GitFileName
-    }
-
-    Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
-    if ( test-path -path $Global:GitFileName ){
-        Unblock-File -path $Global:GitFileName
-        $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
-        if (!$res){
-            exit 1
+$res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
+if ( !$res ) {
+    write-host "1. Install Git."
+    $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
+    If ( $GitURI ) {
+        if ( test-path -path $Global:GitFileName ){
+            Remove-Item -Path $Global:GitFileName
         }
-    }
-    Else {
-        Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
-    }
-}    
+
+        Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
+        if ( test-path -path $Global:GitFileName ){
+            Unblock-File -path $Global:GitFileName
+            $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
+            if (!$res){
+                exit 1
+            }
+        }
+        Else {
+            Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
+        }
+    }  
+}
+Else {
+    & git --version
+}  
 write-host "2. Clone my framework installer"
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
 if ( !(test-path -path $ProjectServicesFolderPath) ){

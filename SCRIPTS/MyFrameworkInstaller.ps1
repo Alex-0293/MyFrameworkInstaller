@@ -125,28 +125,42 @@ Function Start-Programm {
     if ( $Description ){
         write-host $Description -ForegroundColor Green
     }
+    $Command = get-command $Programm
+    
+    if ( $Command ) {
+        if ( $Command.path ) {
+            $ProgPath = $Command.path
+            $Res = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments 
 
-    $Res = Start-Process $Programm -Wait -PassThru -ArgumentList $Arguments 
-
-    if ($Res.HasExited) {
-        switch ( $Res.ExitCode ) {
-            0 { 
-                Write-host "Successfully finished." -ForegroundColor green                
+            if ($Res.HasExited) {
+                switch ( $Res.ExitCode ) {
+                    0 { 
+                        Write-host "Successfully finished." -ForegroundColor green                
+                    }
+                    Default { 
+                        Write-host "Error occured!" -ForegroundColor red
+                        $Success = $false
+                    }
+                }
             }
-            Default { 
+            Else {
                 Write-host "Error occured!" -ForegroundColor red
                 $Success = $false
             }
         }
+        else{
+            Write-host "Command [$Programm] not found!" -ForegroundColor red
+        }
     }
-    Else {
-        Write-host "Error occured!" -ForegroundColor red
-        $Success = $false
+    else{
+        Write-host "Command [$Programm] not found!" -ForegroundColor red
     }
 
     Return $Success
 
 }
+#remove it
+$OSBit = 64
 
 $SettingsPath = "$(split-path (split-path $PSCommandPath -Parent) -Parent)\SETTINGS\Settings.ps1"
 . $SettingsPath
