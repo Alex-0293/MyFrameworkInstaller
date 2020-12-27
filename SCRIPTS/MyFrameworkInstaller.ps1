@@ -340,20 +340,31 @@ if ( !(test-path -path $ModulePath) ){
 }
 
 if (-not (test-path "$ModulePath\AlexkUtils")){
-    Set-Location -path $ModulePath
-    gsudo git.exe clone $Global:AlexKUtilsModuleURL 
+    if ((test-path "$ModulePath")){
+        Set-Location -path $ModulePath
+        gsudo git.exe clone $Global:AlexKUtilsModuleURL 
+    }
+    Else {
+        Write-Host "Path [$ModulePath] not found!" -ForegroundColor red
+    }
 }
 
 if (-not (test-path "$ModulePath\AlexKBuildTools")){
     Set-Location -path $ModulePath
-    gsudo git.exe clone $Global:AlexKBuildToolsModuleURL 
+    if ((test-path "$ModulePath")){
+        Set-Location -path $ModulePath
+        gsudo git.exe clone $Global:AlexKBuildToolsModuleURL 
+    }
+    Else {
+        Write-Host "Path [$ModulePath] not found!" -ForegroundColor red
+    }
 }
 
 if (-not (test-path "$ProjectServicesFolderPath\GitHubRepositoryClone")){    
     Set-Location $ProjectServicesFolderPath
     & git.exe clone $Global:GitHubRepositoryCloneURL
-    Copy-Item -Path "$ProjectsFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1" -Destination "$ProjectsFolderPath\GitHubRepositoryClone\SETTINGS\Settings.ps1"
-    Remove-Item -path "$ProjectsFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1"
+    Copy-Item -Path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings.ps1"
+    Remove-Item -path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1"
 } 
 
 & git.exe config --global user.name  $Global:GitUserName
