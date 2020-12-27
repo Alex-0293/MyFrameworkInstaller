@@ -453,6 +453,7 @@ if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom
         $Global:MyProjectFolderPath = $Global:MyProjectFolderPath.Substring(0,($Global:MyProjectFolderPath.Length - 1))
     }
     $Global:MyProjectFolderPath = $Global:MyProjectFolderPath + "\MyProjects" 
+    write-host "Creating folder [$Global:MyProjectFolderPath]." -ForegroundColor green
     if ( !(test-path $Global:MyProjectFolderPath) ){
         try {
             New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
