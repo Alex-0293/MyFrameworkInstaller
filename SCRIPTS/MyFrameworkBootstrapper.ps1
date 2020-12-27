@@ -27,7 +27,60 @@ function Get-OSInfo {
     $OSInfo = Get-CimInstance Win32_OperatingSystem | select-object *  
     return $OsInfo  
 }
+function Convert-StringToDigitArray {
+<#
+    .SYNOPSIS
+        Convert string to digit array
+    .DESCRIPTION
+        Convert string to array of digit.
+    .EXAMPLE
+        Convert-StringToDigitArray -UserInput $UserInput -DataSize $DataSize
+    .NOTES
+        AUTHOR  Alexk
+        CREATED 05.11.20
+        VER     1
+#>
+    [OutputType([Int[]])]
+    [CmdletBinding()]
+    param(
+        [Parameter( Mandatory = $True, Position = 0, HelpMessage = "String input data.")]
+        [string] $UserInput,
+        [Parameter( Mandatory = $True, Position = 1, HelpMessage = "Data size.")]
+        [int] $DataSize
+    )
 
+    $SelectedArray = ($UserInput -split ",").trim()
+    if ( $SelectedArray[0] -eq "*" ){
+        $SelectedArray = @()
+        foreach ( $Element in ( 1..( $DataSize-1 ) ) ) {
+            $SelectedArray += $Element
+        }
+    }
+    Else {
+        $SelectedIntervals = $SelectedArray | Where-Object { $_ -like "*-*" }
+        [int[]]$SelectedArray = $SelectedArray | Where-Object { $_ -NotLike "*-*" }
+        foreach ( $item in $SelectedIntervals ) {
+            [int[]]$Array = $item -split "-"
+            if ( $Array.count -eq 2 ) {
+                if ( $Array[0] -le $Array[1] ) {
+                    $Begin = $Array[0]
+                    $End = $Array[1]
+                }
+                Else {
+                    $Begin = $Array[1]
+                    $End = $Array[0]
+                }
+                foreach ( $Element in ($begin..$end) ) {
+                    if ( -not ($Element -in $SelectedArray) -and ($Element -gt 0) ) {
+                        $SelectedArray += $Element
+                    }
+                }
+            }
+        }
+    }
+
+    return $SelectedArray
+}
 function Show-ColoredTable {
 <#
     .SYNOPSIS
