@@ -113,6 +113,41 @@ Function Get-Answer {
     return $Res
 
 }
+Function Start-Programm {
+    param (
+        [string] $Programm,
+        [string[]] $Arguments,
+        [string] $Description
+    )
+
+    $Success = $true
+
+    if ( $Description ){
+        write-host $Description -ForegroundColor Green
+    }
+
+
+    $Res = Start-Process $Programm -Wait -ArgumentList $Arguments -PassThru
+
+    if ($Res.HasExited) {
+        switch ( $Res.ExitCode ) {
+            0 { 
+                Write-host "Successfully finished." -ForegroundColor green                
+            }
+            Default { 
+                Write-host "Error occured!" -ForegroundColor red
+                $Success = $false
+            }
+        }
+    }
+    Else {
+        Write-host "Error occured!" -ForegroundColor red
+        $Success = $false
+    }
+
+    Return $Success
+
+}
 
 $SettingsPath = "$(split-path (split-path $PSCommandPath -Parent) -Parent)\SETTINGS\Settings.ps1"
 . $SettingsPath
@@ -126,7 +161,7 @@ if ( $PSVer -lt 5 ) {
     if ( $Answer -eq "Y" ) {
         $InstallWMF5 = $true
         if ( $OSVer -and $OSBit ) {
-            $WMF5 = Get-Variable -name "WMF5_$($OSVer)_$($OSBit)"
+            $WMF5 = (Get-Variable -name "WMF5_$($OSVer)_$($OSBit)").Value
             If ( $WMF5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Remove-Item -Path $Global:WMF5FileName
@@ -135,8 +170,10 @@ if ( $PSVer -lt 5 ) {
                 Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
                 if ( test-path -path $Global:WMF5FileName ){
                     Unblock-File -path $Global:WMF5FileName
-                    write-host "    Installing WMF 5.1."
-                    & wusa.exe $Global:WMF5FileName /quiet /norestart 
+                    $res = Start-Programm -Programm "wusa.exe" -Arguments @("$Global:WMF5FileName",'/quiet','/norestart') -Description "    Installing WMF 5.1."
+                    if (!$res){
+                        exit 1
+                    }                    
                 }
                 Else {
                     Write-Host "Error downloading file [$Global:WMF5FileName]!" -ForegroundColor Red
@@ -153,7 +190,7 @@ if ( $PSVer -lt 5 ) {
 $Answer = Get-Answer -Title "Do you want to install powershell version 7? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
 if ( $Answer -eq "Y" ) {
     write-host "Install Powershell 7."
-    $Powershell7URI = Get-Variable -name "Powershell7$($OSBit)URI"
+    $Powershell7URI = (Get-Variable -name "Powershell7$($OSBit)URI").Value
     If ( $Powershell7URI ) {
         if ( test-path -path $Global:Powershell7FileName ){
             Remove-Item -Path $Global:Powershell7FileName
@@ -162,8 +199,10 @@ if ( $Answer -eq "Y" ) {
         Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
         if ( test-path -path $Global:Powershell7FileName ){
             Unblock-File -path $Global:Powershell7FileName
-            write-host "    Installing Powershell 7."
-            & msiexec /i $Global:Powershell7FileName /quiet /qn /norestart
+            $res = Start-Programm -Programm "msiexec" -Arguments @('/i',"$Global:Powershell7FileName",'/quiet','/qn','/norestart') -Description "    Installing Powershell 7."
+            if (!$res){
+                exit 1
+            } 
         }
         Else {
             Write-Host "Error downloading file [$Global:Powershell7FileName]!" -ForegroundColor Red
@@ -178,7 +217,7 @@ Else{
 $Answer = Get-Answer -Title "Do you want to install VSCode? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
 if ( $Answer -eq "Y" ) {
     write-host "3. Install VSCode."
-    $VSCodeURI = Get-Variable -name "VSCode$($OSBit)URI"
+    $VSCodeURI = (Get-Variable -name "VSCode$($OSBit)URI").Value
     If ( $VSCodeURI ) {
         if ( test-path -path $Global:VSCodeFileName ){
             Remove-Item -Path $Global:VSCodeFileName
@@ -187,8 +226,10 @@ if ( $Answer -eq "Y" ) {
         Invoke-WebRequest -Uri $VSCodeURI -OutFile $Global:VSCodeFileName
         if ( test-path -path $Global:VSCodeFileName ){
             Unblock-File -path $Global:VSCodeFileName
-            write-host "    Installing VSCode."
-            & $Global:VSCodeFileName /silent 
+            $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent') -Description "    Installing VSCode."
+            if (!$res){
+                exit 1
+            }
         }
         Else {
             Write-Host "Error downloading file [$Global:VSCodeFileName]!" -ForegroundColor Red
