@@ -533,6 +533,7 @@ Start-Transcript
 #Git
 [uri] $global:Git64URI       = "https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.3/Git-2.29.2.3-64-bit.exe"
 [uri] $global:Git32URI       = "https://github.com/git-for-windows/git/releases/download/v2.29.2.windows.3/Git-2.29.2.3-32-bit.exe"
+[string] $Global:GitFileName = "$($Env:TEMP)\GitInstall.exe"
 
 #WMF5.1
 [uri]    $Global:WMF5_2012R2_64 = "https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win8.1AndW2K12R2-KB3191564-x64.msu"
@@ -610,15 +611,17 @@ Else {
         write-host "1. Install Git."
         $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
         If ( $GitURI ) {
-            [string] $Global:GitFileName = "$FileCashFolderPath\GitInstall.exe"
-
-            if ( ! (test-path -path $Global:GitFileName)){
-                Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
-                Unblock-File -path $Global:GitFileName
+            if ( test-path -path $Global:GitFileName ){
+                Remove-Item -Path $Global:GitFileName
             }
 
+            Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
             if ( test-path -path $Global:GitFileName ){
-                $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."                
+                Unblock-File -path $Global:GitFileName
+                $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
+                if (!$res){
+                    exit 1
+                }
                 Update-Environment
             }
             Else {
@@ -659,11 +662,10 @@ Else {
     
 
     $InstallConfig = [PSCustomObject]@{
-        MyProjectFolderPath       = $MyProjectFolderPath
-        GitUserName               = $Global:GitUserName
-        GitEmail                  = $Global:GitEmail
-        FileCashFolderPath        = $FileCashFolderPath
-        ProjectServicesFolderPath = $ProjectServicesFolderPath
+        MyProjectFolderPath   = $MyProjectFolderPath
+        GitUserName           = $Global:GitUserName
+        GitEmail              = $Global:GitEmail
+        FileCashFolderPath    = $FileCashFolderPath
     }
 
     $InstallConfig | Export-Clixml -Path "$FileCashFolderPath\Config.xml"
@@ -685,12 +687,9 @@ if ( $PSVer -lt 5 ) {
                     Remove-Item -Path $Global:WMF5FileName
                 }
 
-                if ( ! (test-path -path $Global:WMF5FileName)){
-                    Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
-                    Unblock-File -path $Global:WMF5FileName
-                }
-                
-                if ( test-path -path $Global:WMF5FileName ){               
+                Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
+                if ( test-path -path $Global:WMF5FileName ){
+                    Unblock-File -path $Global:WMF5FileName                    
                     $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
                 }
                 Else {
