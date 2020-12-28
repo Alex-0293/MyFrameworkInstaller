@@ -8,9 +8,6 @@
 [uri] $Global:AlexKUtilsModuleURL      = "https://github.com/Alex-0293/AlexKUtils"
 [uri] $Global:AlexKBuildToolsModuleURL = "https://github.com/Alex-0293/AlexKBuildTools"
 
-#WMF5.1
-[uri]    $Global:WMF5_2012R2_64 = "https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win8.1AndW2K12R2-KB3191564-x64.msu"
-
 #VSCode
 [uri] $global:VSCode64URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
 [uri] $global:VSCode32URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-user"
@@ -36,6 +33,7 @@
 
 [uri] $Global:MyFrameworkInstaller = "https://github.com/Alex-0293/MyFrameworkInstaller.git"
 
+[uri] $Global:GSudoInstallURL      = "https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1"
 
 # Error trap
     trap {

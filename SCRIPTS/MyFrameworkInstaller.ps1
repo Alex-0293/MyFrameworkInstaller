@@ -201,14 +201,19 @@ Function Start-Programm {
                         Write-host "    Successfully finished." -ForegroundColor green                
                     }
                     Default { 
-                        write-host "Error output:"       -ForegroundColor DarkRed
-                        write-host "============="       -ForegroundColor DarkRed
-                        write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        if ( $PSO.ErrorOutput ) {
+                            write-host "Error output:"       -ForegroundColor DarkRed
+                            write-host "============="       -ForegroundColor DarkRed
+                            write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        }
+
                         write-host ""
-                        write-host "Std output:"    -ForegroundColor DarkRed
-                        write-host "============="  -ForegroundColor DarkRed
-                        write-host "$($PSO.Output)" -ForegroundColor red                        
-                        #Write-host "Error [$($Res.ExitCode)] occured!" -ForegroundColor red
+                        
+                        if ( $PSO.Output ) {
+                            write-host "Std output:"    -ForegroundColor DarkRed
+                            write-host "============="  -ForegroundColor DarkRed
+                            write-host "$($PSO.Output)" -ForegroundColor red                        
+                        }
                     }
                 }
             }
@@ -253,7 +258,7 @@ if ( !$IsPS7Installed ) {
     if ( $Answer -eq "Y" ) {
         write-host "Install Powershell 7."
         $Powershell7URI = (Get-Variable -name "Powershell7$($OSBit)URI").Value
-        $Global:Powershell7FileName = "$($Env:TEMP)\$(split-path -path $Powershell7URI -Leaf)"
+        $Global:Powershell7FileName = "$FileCashFolderPath\$(split-path -path $Powershell7URI -Leaf)"
         If ( $Powershell7URI ) {
             if ( test-path -path $Global:Powershell7FileName ){
                 Remove-Item -Path $Global:Powershell7FileName
@@ -289,7 +294,7 @@ if ( !$CodeCommand ) {
     if ( $Answer -eq "Y" ) {
         write-host "3. Install VSCode."
         $VSCodeURI = (Get-Variable -name "VSCode$($OSBit)URI").Value
-        $Global:VSCodeFileName = "$($Env:TEMP)\VSCode.exe"
+        $Global:VSCodeFileName = "$FileCashFolderPath\VSCode.exe"
         If ( $VSCodeURI ) {
             if ( test-path -path $Global:VSCodeFileName ){
                 Remove-Item -Path $Global:VSCodeFileName
@@ -298,7 +303,7 @@ if ( !$CodeCommand ) {
             $res = Invoke-WebRequest -Uri $VSCodeURI -OutFile $Global:VSCodeFileName -PassThru
             $OldName = $Global:VSCodeFileName
             $FileName = $res.headers."Content-Disposition".split("`"")[1]
-            $Global:VSCodeFileName = "$($Env:TEMP)\$FileName"
+            $Global:VSCodeFileName = "$FileCashFolderPath\$FileName"
             rename-item -Path $OldName -NewName $Global:VSCodeFileName
 
             if ( test-path -path $Global:VSCodeFileName ){

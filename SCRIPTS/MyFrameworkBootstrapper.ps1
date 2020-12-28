@@ -377,7 +377,6 @@ Function Get-Answer {
     return $Res
 
 }
-
 Function Start-Programm {
     param (
         [string] $Programm,
@@ -466,14 +465,19 @@ Function Start-Programm {
                         Write-host "    Successfully finished." -ForegroundColor green                
                     }
                     Default { 
-                        write-host "Error output:"       -ForegroundColor DarkRed
-                        write-host "============="       -ForegroundColor DarkRed
-                        write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        if ( $PSO.ErrorOutput ) {
+                            write-host "Error output:"       -ForegroundColor DarkRed
+                            write-host "============="       -ForegroundColor DarkRed
+                            write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        }
+
                         write-host ""
-                        write-host "Std output:"    -ForegroundColor DarkRed
-                        write-host "============="  -ForegroundColor DarkRed
-                        write-host "$($PSO.Output)" -ForegroundColor red                        
-                        #Write-host "Error [$($Res.ExitCode)] occured!" -ForegroundColor red
+                        
+                        if ( $PSO.Output ) {
+                            write-host "Std output:"    -ForegroundColor DarkRed
+                            write-host "============="  -ForegroundColor DarkRed
+                            write-host "$($PSO.Output)" -ForegroundColor red                        
+                        }
                     }
                 }
             }
@@ -491,9 +495,36 @@ Function Start-Programm {
 
     Return $PSO
 }
-
 function Update-Environment {
+    write-host "Refresh environment..." -ForegroundColor Yellow
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+function Add-ToAutorun {
+    Param (
+        $FilePath
+    )
+}
+function New-Folder {
+    Param (
+        [string] $FolderPath
+    )
+
+    if ( !(test-path $FolderPath) ){
+        try {
+            New-Item -Path $FolderPath -ItemType Directory | Out-Null
+        }
+        Catch {
+            try {
+                gsudo New-Item -Path $FolderPath -ItemType Directory | Out-Null
+            }
+            Catch {            
+                Write-host "Folder path [$($FolderPath)] cannot be created! $_" -ForegroundColor Red
+            }
+        }
+    }
+    Else {
+        Write-host "Folder path [$($FolderPath)] already exist." -ForegroundColor Green
+    }
 }
 
 clear-host
@@ -511,143 +542,133 @@ Start-Transcript
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$Data = @()
-$PSO = [PSCustomObject]@{
-    FullName = "$($Env:USERPROFILE)\Documents\MyProjects"
-}
-$Data += $PSO
-$PSO = [PSCustomObject]@{
-    FullName = "c:\DATA\MyProjects"
-}
-$Data += $PSO
-$PSO = [PSCustomObject]@{
-    FullName = "Custom"
-}
-$Data += $PSO
-
-$Global:MyProjectFolderPath = $null
-
-$Global:MyProjectFolderPath = (Show-ColoredTable -Data $Data -View "FullName" -Title "Path options:" -AddRowNumbers -PassThru -Color   "Cyan","DarkMagenta", "Magenta" -SelectMessage "Select MyProject path: " -SelectField "FullName" -AddNewLine).FullName
-
-if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom") ){
-    $Global:MyProjectFolderPath = Get-Answer -Title "Enter custom MyProjects folder path (like: c:\data): " -Color "Cyan","DarkMagenta" -AddNewLine
-    if (($Global:MyProjectFolderPath.Substring(($Global:MyProjectFolderPath.Length-1),1) -eq "\") -or ($Global:MyProjectFolderPath.Substring(($Global:MyProjectFolderPath.Length-1),1) -eq "/") ) {
-        $Global:MyProjectFolderPath = $Global:MyProjectFolderPath.Substring(0,($Global:MyProjectFolderPath.Length - 1))
-    }
-    $Global:MyProjectFolderPath = $Global:MyProjectFolderPath + "\MyProjects" 
-    if ( !(test-path $Global:MyProjectFolderPath) ){
-        try {
-            New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
-        }
-        Catch {
-            try {
-                gsudo New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
-            }
-            Catch {            
-                Write-host "Folder path [$($Global:MyProjectFolderPath)] cannot be created! $_" -ForegroundColor Red
-            }
-        }
-    }
-    Else {
-        Write-host "Folder path [$($Global:MyProjectFolderPath)] already exist." -ForegroundColor Green
+$root = "$($Env:USERPROFILE)\Documents\MyProjects"
+$FileCashFolderPath = "$Root\Install"
+write-host "File cache folder [$FileCashFolderPath]."
+if ( test-path $FileCashFolderPath ){
+    [psobject]$InstallConfig = Import-Clixml -path "$FileCashFolderPath\Config.xml"  
+    foreach ( $item in $InstallConfig.PSObject.Properties ){
+        Set-Variable -Name $item.Name -Value $item.Value -Scope global
     }
 }
 Else {
-    if ( !(test-path $Global:MyProjectFolderPath) ){
-        try {
-            New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
+    $Data = @()
+    $PSO = [PSCustomObject]@{
+        FullName = "$($Env:USERPROFILE)\Documents\MyProjects"
+    }
+    $Data += $PSO
+    $PSO = [PSCustomObject]@{
+        FullName = "c:\DATA\MyProjects"
+    }
+    $Data += $PSO
+    $PSO = [PSCustomObject]@{
+        FullName = "Custom"
+    }
+    $Data += $PSO
+
+    $Global:MyProjectFolderPath = $null
+
+    $Global:MyProjectFolderPath = (Show-ColoredTable -Data $Data -View "FullName" -Title "Path options:" -AddRowNumbers -PassThru -Color   "Cyan","DarkMagenta", "Magenta" -SelectMessage "Select MyProject path: " -SelectField "FullName" -AddNewLine).FullName
+
+    if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom") ){
+        $Global:MyProjectFolderPath = Get-Answer -Title "Enter custom MyProjects folder path (like: c:\data): " -Color "Cyan","DarkMagenta" -AddNewLine
+        if (($Global:MyProjectFolderPath.Substring(($Global:MyProjectFolderPath.Length-1),1) -eq "\") -or ($Global:MyProjectFolderPath.Substring(($Global:MyProjectFolderPath.Length-1),1) -eq "/") ) {
+            $Global:MyProjectFolderPath = $Global:MyProjectFolderPath.Substring(0,($Global:MyProjectFolderPath.Length - 1))
         }
-        Catch {
-            try {
-                gsudo New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
-            }
-            Catch {            
-                Write-host "Folder path [$($Global:MyProjectFolderPath)] cannot be created! $_" -ForegroundColor Red
-            }
-        }
+        $Global:MyProjectFolderPath = $Global:MyProjectFolderPath + "\MyProjects" 
+        New-Folder -FolderPath $Global:MyProjectFolderPath    
     }
     Else {
-        Write-host "Folder path [$($Global:MyProjectFolderPath)] already exist." -ForegroundColor Green
+        New-Folder -FolderPath $Global:MyProjectFolderPath      
     }
-}
+    $FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install" 
+    New-Folder -FolderPath $FileCashFolderPath  
 
-[string] $Global:GitUserName         = Get-Answer -Title "Enter your git user name: " -Color "Cyan","DarkMagenta" -AddNewLine
-[string] $Global:GitEmail            = Get-Answer -Title "Enter your git email: " -Color "Cyan","DarkMagenta" -AddNewLine
+    [string] $Global:GitUserName         = Get-Answer -Title "Enter your git user name: " -Color "Cyan","DarkMagenta" -AddNewLine
+    [string] $Global:GitEmail            = Get-Answer -Title "Enter your git email: " -Color "Cyan","DarkMagenta" -AddNewLine
 
-$Global:OSInfo = Get-OSInfo
+    $Global:OSInfo = Get-OSInfo
 
-switch ( $OSInfo.caption ) {
-    "Microsoft Windows Server 2012 R2 Standard" { $Global:OSVer = "2012R2" }
-    Default { 
-        $Global:OSVer = $null 
-        Write-host "Unknown OS version [$OSInfo.caption]!" -ForegroundColor red
-    }
-}
-
-switch -Wildcard ( $OSInfo.OSArchitecture ) {
-    "64*" { $Global:OSBit = 64 }
-    "32*" { $Global:OSBit = 32 }
-    Default { 
-        $Global:OSBit = $null
-        Write-host "Unknown OS bitness [$OSInfo.OSArchitecture]!" -ForegroundColor red
-    }
-}
-
-$res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
-if ( !$res.Command ) {
-    write-host "1. Install Git."
-    $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
-    If ( $GitURI ) {
-        if ( test-path -path $Global:GitFileName ){
-            Remove-Item -Path $Global:GitFileName
+    switch ( $OSInfo.caption ) {
+        "Microsoft Windows Server 2012 R2 Standard" { $Global:OSVer = "2012R2" }
+        Default { 
+            $Global:OSVer = $null 
+            Write-host "Unknown OS version [$OSInfo.caption]!" -ForegroundColor red
         }
+    }
 
-        Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
-        if ( test-path -path $Global:GitFileName ){
-            Unblock-File -path $Global:GitFileName
-            $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
-            if (!$res){
-                exit 1
+    switch -Wildcard ( $OSInfo.OSArchitecture ) {
+        "64*" { $Global:OSBit = 64 }
+        "32*" { $Global:OSBit = 32 }
+        Default { 
+            $Global:OSBit = $null
+            Write-host "Unknown OS bitness [$OSInfo.OSArchitecture]!" -ForegroundColor red
+        }
+    }
+
+    $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
+    if ( !$res.Command ) {
+        write-host "1. Install Git."
+        $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
+        If ( $GitURI ) {
+            if ( test-path -path $Global:GitFileName ){
+                Remove-Item -Path $Global:GitFileName
             }
-            Update-Environment
-        }
-        Else {
-            Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
-        }
+
+            Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
+            if ( test-path -path $Global:GitFileName ){
+                Unblock-File -path $Global:GitFileName
+                $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
+                if (!$res){
+                    exit 1
+                }
+                Update-Environment
+            }
+            Else {
+                Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
+            }
+        }  
+    }
+    Else {
+        write-host "    $($res.output)"
     }  
-}
-Else {
-    write-host "    $($res.output)"
-}  
-write-host "2. Clone my framework installer"
-$ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
-if ( !(test-path -path $ProjectServicesFolderPath) ){
-    try {
-        New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
-    }
-    Catch{
-        try {
-            gsudo New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
-        }
-        Catch {
-            Write-host "Folder path [$ProjectServicesFolderPath] cannot be created! $_" -ForegroundColor Red
-        }
-    }
-}
 
-Set-Location -Path $ProjectServicesFolderPath
-$res = Start-Programm -Programm "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
-if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
-    Write-host "    Folder already exist." -ForegroundColor yellow  
-}
-Else {
-    if ( $res.ErrorOutput ){
-        write-host $res.ErrorOutput -ForegroundColor Red
+    Update-Environment
+
+    write-host "2. Clone my framework installer"
+    $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
+    if ( !(test-path -path $ProjectServicesFolderPath) ){
+        try {
+            New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
+        }
+        Catch{
+            try {
+                gsudo New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
+            }
+            Catch {
+                Write-host "Folder path [$ProjectServicesFolderPath] cannot be created! $_" -ForegroundColor Red
+            }
+        }
     }
+
+    Set-Location -Path $ProjectServicesFolderPath
+    $res = Start-Programm -Programm "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
+        
+    if ( $res.object.exitcode -eq 0 ){
+        Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
+        Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"   
+    }
+        
     
-    Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
-    Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"   
-     
+
+    $InstallConfig = [PSCustomObject]@{
+        MyProjectFolderPath   = $MyProjectFolderPath
+        GitUserName           = $Global:GitUserName
+        GitEmail              = $Global:GitEmail
+        FileCashFolderPath    = $FileCashFolderPath
+    }
+
+    $InstallConfig | Export-Clixml -Path "$FileCashFolderPath\Config.xml"
 }
 
 write-host "Check powershell version."
@@ -660,7 +681,7 @@ if ( $PSVer -lt 5 ) {
         $InstallWMF5 = $true
         if ( $OSVer -and $OSBit ) {
             $WMF5 = (Get-Variable -name "WMF5_$($OSVer)_$($OSBit)").Value
-            $Global:WMF5FileName = "$($Env:TEMP)\$(split-path -path $WMF5 -Leaf)"
+            $Global:WMF5FileName = "$FileCashFolderPath\$(split-path -path $WMF5 -Leaf)"
             If ( $WMF5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Remove-Item -Path $Global:WMF5FileName
@@ -682,7 +703,6 @@ if ( $PSVer -lt 5 ) {
         }
     }
 }
-
 
 
 $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
