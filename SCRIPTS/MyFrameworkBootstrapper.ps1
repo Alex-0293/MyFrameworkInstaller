@@ -712,8 +712,7 @@ if ( $PSVer -lt 5 ) {
     }
 }
 
-$PSMaximumVer = ($psversiontable.PSCompatibleVersions.major | Measure-Object -max | Select-Object maximum).Maximum
-if ( $PSMaximumVer -ge 7 ){
+if (Get-Command -name "pwsh.exe" ){
     $IsPS7Installed = $True
 }
 Else {
