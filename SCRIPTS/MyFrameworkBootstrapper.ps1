@@ -662,10 +662,11 @@ Else {
     
 
     $InstallConfig = [PSCustomObject]@{
-        MyProjectFolderPath   = $MyProjectFolderPath
-        GitUserName           = $Global:GitUserName
-        GitEmail              = $Global:GitEmail
-        FileCashFolderPath    = $FileCashFolderPath
+        MyProjectFolderPath       = $MyProjectFolderPath
+        GitUserName               = $Global:GitUserName
+        GitEmail                  = $Global:GitEmail
+        FileCashFolderPath        = $FileCashFolderPath
+        ProjectServicesFolderPath = $ProjectServicesFolderPath
     }
 
     $InstallConfig | Export-Clixml -Path "$FileCashFolderPath\Config.xml"
