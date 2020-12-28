@@ -270,6 +270,7 @@ function Remove-FromStartUp {
         Set-ExecutionPolicy RemoteSigned -Scope Process
         $GSudoInstall = Invoke-WebRequest -UseBasicParsing $Global:GSudoInstallURL
         Invoke-Expression $GSudoInstall
+        Update-Environment
     }
     
     $CodeCommand = Get-Command "Code" -ErrorAction SilentlyContinue
