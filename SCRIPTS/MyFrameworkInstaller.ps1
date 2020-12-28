@@ -451,13 +451,11 @@ if ( $InstallWMF5 ){
 $res = Import-Module -name "AlexKUtils" -Force -PassThru
 if ( !$res){
     write-host "Failed to import module [AlexkUtils]!" -ForegroundColor Red
-    exit 1
 }
 
 $res = Import-Module -name "AlexKBuildTools" -Force -PassThru
 if ( !$res){
     write-host "Failed to import module [AlexKBuildTools]!" -ForegroundColor Red
-    exit 1
 }
 
 $ProjectsFolderPath  = "$($Global:MyProjectFolderPath)\Projects"
