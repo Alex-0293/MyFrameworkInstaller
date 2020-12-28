@@ -476,8 +476,11 @@ function Remove-FromStartUp {
     Remove-FromStartUp -ShortCutName "MyFrameworkInstaller"
     Stop-Transcript
 
-    $GitHubRepositoryCloneScript = "$($Global:gsProjectServicesFolderPath)\GitHubRepositoryClone\$($Global:gsSCRIPTSFolder)\GitHubRepositoryClone.ps1"
-    . $GitHubRepositoryCloneScript
+    $Answer = Get-Answer -Title "Do you want to install additional projects? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
+    if ( $Answer -eq "Y" ) {
+        $GitHubRepositoryCloneScript = "$($Global:gsProjectServicesFolderPath)\GitHubRepositoryClone\$($Global:gsSCRIPTSFolder)\GitHubRepositoryClone.ps1"
+        . $GitHubRepositoryCloneScript
+    }
     
     read-host -Prompt "Press enter key..."
     remove-item -path $FileCashFolderPath -Recurse -Force
