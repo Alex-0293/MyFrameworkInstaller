@@ -708,10 +708,54 @@ if ( $PSVer -lt 5 ) {
     }
 }
 
+$PSMaximumVer = ($psversiontable.PSCompatibleVersions.major | Measure-Object -max | Select-Object maximum).Maximum
+if ( $PSMaximumVer -ge 7 ){
+    $IsPS7Installed = $True
+}
+Else {
+    $IsPS7Installed = $False
+}
+if ( !$IsPS7Installed ) {
+    $Answer = Get-Answer -Title "Do you want to install powershell version 7? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
+    if ( $Answer -eq "Y" ) {
+        write-host "Install Powershell 7."
+        $Powershell7URI = (Get-Variable -name "Powershell7$($OSBit)URI").Value
+        $Global:Powershell7FileName = "$FileCashFolderPath\$(split-path -path $Powershell7URI -Leaf)"
+        If ( $Powershell7URI ) {
+            if ( test-path -path $Global:Powershell7FileName ){
+                Remove-Item -Path $Global:Powershell7FileName
+            }
+
+            Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
+            if ( test-path -path $Global:Powershell7FileName ){
+                Unblock-File -path $Global:Powershell7FileName
+
+                $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/qn','/promptrestart') -Description "    Installing Powershell 7."
+                
+                # if ( !(($res.Output -like "*Configuration completed successfully.*") -or ($res.Output -like "*Installation completed successfully.*"))){
+                #     write-host $res.Output -ForegroundColor Red
+                # } 
+            }
+            Else {
+                Write-Host "Error downloading file [$Global:Powershell7FileName]!" -ForegroundColor Red
+            }
+        }  
+        $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
+    }
+    Else{
+        $Global:PowershellModulePath  = "c:\program files\powershell\Modules"
+    }
+}
+Else {
+    $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
+}
 
 $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
 write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
 
-. $MyFrameworkInstallerPath
+Update-Environment
+
+& pwsh.exe $MyFrameworkInstallerPath
+
 ################################# Script end here ###################################
 
