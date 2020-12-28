@@ -507,15 +507,17 @@ function Add-ToStartUp {
     )
 
     write-host "Adding shortcut [$ShortCutName] to user startup folder"
-    $UserStartUpFolderPath = "$($Env:APPDATA)\Microsoft\Windows\Start Menu\Programs\Startup"
-    
-    $WshShell                  = New-Object -comObject WScript.Shell
+    if ( $FilePath ) {
+        $UserStartUpFolderPath = "$($Env:APPDATA)\Microsoft\Windows\Start Menu\Programs\Startup"
+        
+        $WshShell                  = New-Object -comObject WScript.Shell
 
-    $Shortcut                  = $WshShell.CreateShortcut("$UserStartUpFolderPath\$ShortCutName.lnk")
-    $Shortcut.TargetPath       = $FilePath
-    #$Shortcut.Arguments        = "/iq `"custom.bgi`" /accepteula /timer:0"
-    $Shortcut.WorkingDirectory = $WorkingDirectory
-    $Shortcut.Save()
+        $Shortcut                  = $WshShell.CreateShortcut("$UserStartUpFolderPath\$ShortCutName.lnk")
+        $Shortcut.TargetPath       = $FilePath
+        #$Shortcut.Arguments        = "/iq `"custom.bgi`" /accepteula /timer:0"
+        $Shortcut.WorkingDirectory = $WorkingDirectory
+        $Shortcut.Save()
+    }
 }
 function New-Folder {
     Param (
