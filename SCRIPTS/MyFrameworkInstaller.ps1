@@ -244,7 +244,7 @@ function Remove-FromStartUp {
         
         $ShorCutPath = "$UserStartUpFolderPath\$($ShortCutName).lnk"
         write-host "Removing shortcut [$ShortCutName] from user startup folder"
-        remove-item -path $ShorCutPath -Force        
+        remove-item -path $ShorCutPath -Force -ErrorAction SilentlyContinue        
     }
 }
     #remove it
@@ -480,6 +480,5 @@ function Remove-FromStartUp {
     . $GitHubRepositoryCloneScript
     
     read-host -Prompt "Press enter key..."
-    ################################# Script end here ###################################
-    
-    
+    remove-item -path $FileCashFolderPath -Recurse -Force
+    ################################# Script end here ################################### 

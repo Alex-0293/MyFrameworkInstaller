@@ -678,7 +678,7 @@ if ( $res.object.exitcode -eq 0 ){
     Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"   
 }
 
-write-host "Check powershell version."
+write-host "3. Check powershell version."
 $PSVer = [int16] $PSVersionTable.PSVersion.major
 write-host "    Powershel version [$PSVer]."
 if ( $PSVer -lt 5 ) {
@@ -762,4 +762,3 @@ Stop-Transcript
 & pwsh.exe $MyFrameworkInstallerPath
 
 ################################# Script end here ###################################
-
