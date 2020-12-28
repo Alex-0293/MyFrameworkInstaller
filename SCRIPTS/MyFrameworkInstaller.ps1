@@ -251,7 +251,7 @@ if ( $PSVer -lt 5 ) {
                 Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
                 if ( test-path -path $Global:WMF5FileName ){
                     Unblock-File -path $Global:WMF5FileName                    
-                    $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet','/norestart') -Description "    Installing WMF 5.1."
+                    $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
                 }
                 Else {
                     Write-Host "Error downloading file [$Global:WMF5FileName]!" -ForegroundColor Red
@@ -358,10 +358,10 @@ if ( $Answer -eq "Y" ) {
         Set-Content -path $Global:VSCodeConfigFilePath -Value $Global:VSCodeConfig -Force
 
         write-host "   create MyProject folder"
-        New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
+        New-Item -Path $Global:MyProjectFolderPath -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
 
         write-host "   create MyProject\Projects folder"
-        New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory | Out-Null
+        New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory  -ErrorAction SilentlyContinue | Out-Null
 
         $StartVSCode = $True    
     }

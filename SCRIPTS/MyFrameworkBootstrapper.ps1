@@ -609,7 +609,7 @@ if ( !$res.Command ) {
     }  
 }
 Else {
-    $res.output
+    write-host "    $($res.output)"
 }  
 write-host "2. Clone my framework installer"
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
