@@ -322,6 +322,7 @@ function Remove-FromStartUp {
                 if ( test-path -path $Global:VSCodeFileName ){
                     Unblock-File -path $Global:VSCodeFileName
                     $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent', '/MERGETASKS=!runcode') -Description "    Installing VSCode."
+                    Update-Environment
                     # if ( $res.ErrorOutput ){
                     #     write-host $res.ErrorOutput -ForegroundColor Red
                     # }
