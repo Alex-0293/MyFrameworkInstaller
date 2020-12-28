@@ -1,4 +1,5 @@
 ACL/*
 SETTINGS/Settings.ps1
-LOGS/Errors.log
+LOGS/*
 VALUES/*
+TESTS/LOGS/*
