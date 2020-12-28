@@ -371,7 +371,8 @@ function Remove-FromStartUp {
     $GlobalSettingsScriptPath = "$ProjectsFolderPath\GlobalSettings\SCRIPTS"
     gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkInitScript' , \""$GlobalSettingsScriptPath\Init.ps1\"", [EnvironmentVariableTarget]::Machine )"    
     gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkGlobalInitScript' , \""$GlobalSettingsScriptPath\InitGlobal.ps1\"", [EnvironmentVariableTarget]::Machine )"  
-    
+    Update-Environment
+
     $ModulePath = $Global:PowershellModulePath
     if ( !(test-path -path $ModulePath) ){
         new-item -path $ModulePath -ItemType Directory | Out-Null
