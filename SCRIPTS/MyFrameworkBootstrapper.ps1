@@ -687,9 +687,12 @@ if ( $PSVer -lt 5 ) {
                     Remove-Item -Path $Global:WMF5FileName
                 }
 
-                Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
-                if ( test-path -path $Global:WMF5FileName ){
-                    Unblock-File -path $Global:WMF5FileName                    
+                if ( ! (test-path -path $Global:WMF5FileName)){
+                    Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
+                    Unblock-File -path $Global:WMF5FileName
+                }
+                
+                if ( test-path -path $Global:WMF5FileName ){               
                     $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
                 }
                 Else {

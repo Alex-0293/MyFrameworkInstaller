@@ -264,9 +264,12 @@ if ( !$IsPS7Installed ) {
                 Remove-Item -Path $Global:Powershell7FileName
             }
 
-            Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
-            if ( test-path -path $Global:Powershell7FileName ){
+            if ( ! (test-path -path $Global:Powershell7FileName)){
+                Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
                 Unblock-File -path $Global:Powershell7FileName
+            }
+
+            if ( test-path -path $Global:Powershell7FileName ){                
 
                 $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/qn','/promptrestart') -Description "    Installing Powershell 7."
                 
