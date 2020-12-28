@@ -201,6 +201,13 @@ Function Start-Programm {
                         Write-host "    Successfully finished." -ForegroundColor green                
                     }
                     Default { 
+                        write-host "Error output:"       -ForegroundColor DarkRed
+                        write-host "============="       -ForegroundColor DarkRed
+                        write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        write-host ""
+                        write-host "Std output:"    -ForegroundColor DarkRed
+                        write-host "============="  -ForegroundColor DarkRed
+                        write-host "$($PSO.Output)" -ForegroundColor red                        
                         #Write-host "Error [$($Res.ExitCode)] occured!" -ForegroundColor red
                     }
                 }
@@ -245,17 +252,6 @@ if ( $PSVer -lt 5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Unblock-File -path $Global:WMF5FileName                    
                     $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet','/norestart') -Description "    Installing WMF 5.1."
-                    
-                    if (!$res){                        
-                        start-sleep -Seconds 10
-                        exit 1
-                    }
-                    else {
-                        # if (!($res.Output -like "*Update is already installed…*") ){
-                        #     start-sleep -Seconds 10
-                        #     exit 1
-                        # }
-                    }                    
                 }
                 Else {
                     Write-Host "Error downloading file [$Global:WMF5FileName]!" -ForegroundColor Red
@@ -292,9 +288,10 @@ if ( !$IsPS7Installed ) {
                 Unblock-File -path $Global:Powershell7FileName
 
                 $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/qn','/promptrestart') -Description "    Installing Powershell 7."
-                if ( !($res.Output -like "*Configuration completed successfully.*") ){
-                    write-host $res.Output -ForegroundColor Red
-                } 
+                
+                # if ( !(($res.Output -like "*Configuration completed successfully.*") -or ($res.Output -like "*Installation completed successfully.*"))){
+                #     write-host $res.Output -ForegroundColor Red
+                # } 
             }
             Else {
                 Write-Host "Error downloading file [$Global:Powershell7FileName]!" -ForegroundColor Red
@@ -310,7 +307,7 @@ Else {
     $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
 }
 
-$CodeCommand = Get-Command "Code"
+$CodeCommand = Get-Command "Code" -ErrorAction SilentlyContinue
 if ( !$CodeCommand ) {
     $Answer = Get-Answer -Title "Do you want to install VSCode? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
     if ( $Answer -eq "Y" ) {
@@ -330,10 +327,10 @@ if ( !$CodeCommand ) {
 
             if ( test-path -path $Global:VSCodeFileName ){
                 Unblock-File -path $Global:VSCodeFileName
-                $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent') -Description "    Installing VSCode."
-                if ( $res.ErrorOutput ){
-                    write-host $res.ErrorOutput -ForegroundColor Red
-                }
+                $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent', '/MERGETASKS=!runcode') -Description "    Installing VSCode."
+                # if ( $res.ErrorOutput ){
+                #     write-host $res.ErrorOutput -ForegroundColor Red
+                # }
             }
             Else {
                 Write-Host "Error downloading file [$Global:VSCodeFileName]!" -ForegroundColor Red
@@ -348,14 +345,14 @@ if ( $Answer -eq "Y" ) {
         write-host "4. Config VSCode."
 
         $res = Start-Programm -Programm "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell extention."
-        if ( $res.ErrorOutput ){
-            write-host $res.ErrorOutput -ForegroundColor Red
-        }
+        # if ( $res.ErrorOutput ){
+        #     write-host $res.ErrorOutput -ForegroundColor Red
+        # }
 
         $res = Start-Programm -Programm "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack extention."
-        if ( $res.ErrorOutput ){
-            write-host $res.ErrorOutput -ForegroundColor Red
-        }
+        # if ( $res.ErrorOutput ){
+        #     write-host $res.ErrorOutput -ForegroundColor Red
+        # }
 
         write-host "   create VSCode user config"
         Set-Content -path $Global:VSCodeConfigFilePath -Value $Global:VSCodeConfig -Force
@@ -401,10 +398,7 @@ if (-not (test-path "$ProjectsFolderPath\GlobalSettings")){
         Write-host "    Folder already exist." -ForegroundColor yellow  
     }
     Else {
-        if ( $res.ErrorOutput ){
-            write-host $res.ErrorOutput -ForegroundColor Red
-        }
-        Else {
+        if ( $res.object.exitcode -eq 0 ) {
             Copy-Item -Path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1" -Destination "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings.ps1"
             Remove-Item -path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1"
         }        
@@ -427,11 +421,6 @@ if (-not (test-path "$ModulePath\AlexkUtils")){
         if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
             Write-host "    Folder already exist." -ForegroundColor yellow  
         }
-        Else {
-            if ( $res.ErrorOutput ){
-                write-host $res.ErrorOutput -ForegroundColor Red
-            }                   
-        } 
     }
     Else {
         Write-Host "Path [$ModulePath] not found!" -ForegroundColor red
@@ -445,12 +434,7 @@ if (-not (test-path "$ModulePath\AlexKBuildTools")){
         $res = Start-Programm -Programm "git" -Arguments @('clone', $Global:AlexKBuildToolsModuleURL ) -Description "    Git clone [$Global:AlexKBuildToolsModuleURL]."
         if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
             Write-host "    Folder already exist." -ForegroundColor yellow  
-        }
-        Else {
-            if ( $res.ErrorOutput ){
-                write-host $res.ErrorOutput -ForegroundColor Red
-            }                   
-        } 
+        }        
     }
     Else {
         Write-Host "Path [$ModulePath] not found!" -ForegroundColor red
@@ -464,13 +448,10 @@ if (-not (test-path "$ProjectServicesFolderPath\GitHubRepositoryClone")){
         Write-host "    Folder already exist." -ForegroundColor yellow  
     }
     Else {
-        if ( $res.ErrorOutput ){
-            write-host $res.ErrorOutput -ForegroundColor Red
-        }
-        Else {
+        if ( $res.object.exitcode -eq 0 ) {
             Copy-Item -Path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\GlobalSettings\SETTINGS\Settings.ps1"
             Remove-Item -path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1"
-        }        
+        }      
     }    
 } 
 
