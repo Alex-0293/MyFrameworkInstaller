@@ -31,6 +31,8 @@
 
 [uri] $Global:GSudoInstallURL      = "https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1"
 
+[string] $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
+
 # Error trap
     trap {
         $Global:LocalSettingsSuccessfullyLoaded = $False
