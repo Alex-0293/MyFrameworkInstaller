@@ -506,6 +506,7 @@ function Add-ToStartUp {
         [string] $WorkingDirectory
     )
 
+    write-host "Adding shortcut [$ShortCutName] to user startup folder"
     $UserStartUpFolderPath = "$($Env:APPDATA)\Microsoft\Windows\Start Menu\Programs\Startup"
     
     $WshShell                  = New-Object -comObject WScript.Shell
