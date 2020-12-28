@@ -530,11 +530,11 @@ if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom
     $Global:MyProjectFolderPath = $Global:MyProjectFolderPath + "\MyProjects" 
     if ( !(test-path $Global:MyProjectFolderPath) ){
         try {
-            New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+            New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
         }
         Catch {
             try {
-                gsudo New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+                gsudo New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
             }
             Catch {            
                 Write-host "Folder path [$($Global:MyProjectFolderPath)] cannot be created! $_" -ForegroundColor Red
@@ -548,11 +548,11 @@ if ( (!$Global:MyProjectFolderPath) -or ($Global:MyProjectFolderPath -eq "Custom
 Else {
     if ( !(test-path $Global:MyProjectFolderPath) ){
         try {
-            New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+            New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
         }
         Catch {
             try {
-                gsudo New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+                gsudo New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
             }
             Catch {            
                 Write-host "Folder path [$($Global:MyProjectFolderPath)] cannot be created! $_" -ForegroundColor Red
@@ -615,11 +615,11 @@ write-host "2. Clone my framework installer"
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
 if ( !(test-path -path $ProjectServicesFolderPath) ){
     try {
-        New-Item -Path $ProjectServicesFolderPath -ItemType Directory
+        New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
     }
     Catch{
         try {
-            gsudo New-Item -Path $ProjectServicesFolderPath -ItemType Directory
+            gsudo New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
         }
         Catch {
             Write-host "Folder path [$ProjectServicesFolderPath] cannot be created! $_" -ForegroundColor Red

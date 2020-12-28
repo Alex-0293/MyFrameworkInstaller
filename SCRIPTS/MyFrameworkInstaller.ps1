@@ -361,10 +361,10 @@ if ( $Answer -eq "Y" ) {
         Set-Content -path $Global:VSCodeConfigFilePath -Value $Global:VSCodeConfig -Force
 
         write-host "   create MyProject folder"
-        New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+        New-Item -Path $Global:MyProjectFolderPath -ItemType Directory | Out-Null
 
         write-host "   create MyProject\Projects folder"
-        New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory
+        New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory | Out-Null
 
         $StartVSCode = $True    
     }
@@ -375,22 +375,22 @@ if ( $Answer -eq "Y" ) {
 
 $ProjectsFolderPath        = "$($Global:MyProjectFolderPath)\Projects"
 if (-not (Test-Path $ProjectsFolderPath) ) {
-    New-Item -Path $ProjectsFolderPath  -ItemType Directory -Force
+    New-Item -Path $ProjectsFolderPath  -ItemType Directory -Force | Out-Null
 }
 
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
 if (-not (Test-Path $ProjectServicesFolderPath) ) {
-    New-Item -Path $ProjectServicesFolderPath  -ItemType Directory -Force
+    New-Item -Path $ProjectServicesFolderPath  -ItemType Directory -Force | Out-Null
 }
 
 $OtherProjectsFolderPath   = "$($Global:MyProjectFolderPath)\OtherProjects"
 if (-not (Test-Path $OtherProjectsFolderPath) ) {
-    New-Item -Path $OtherProjectsFolderPath  -ItemType Directory -Force
+    New-Item -Path $OtherProjectsFolderPath  -ItemType Directory -Force | Out-Null
 }
 
 $DisabledProjectsFolderPath = "$($Global:MyProjectFolderPath)\DisabledProjects"
 if (-not (Test-Path $DisabledProjectsFolderPath) ) {
-    New-Item -Path $DisabledProjectsFolderPath  -ItemType Directory -Force
+    New-Item -Path $DisabledProjectsFolderPath  -ItemType Directory -Force | Out-Null
 }
 
 
@@ -417,7 +417,7 @@ gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkGlobalInitScript' ,
 
 $ModulePath = $Global:PowershellModulePath
 if ( !(test-path -path $ModulePath) ){
-    new-item -path $ModulePath -ItemType Directory
+    new-item -path $ModulePath -ItemType Directory | Out-Null
 }
 
 if (-not (test-path "$ModulePath\AlexkUtils")){
