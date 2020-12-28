@@ -12,10 +12,6 @@
 [uri] $global:VSCode64URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
 [uri] $global:VSCode32URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-user"
 
-#Powershell7
-[uri] $global:Powershell764URI       = "https://github.com/PowerShell/PowerShell/releases/download/v7.1.0/PowerShell-7.1.0-win-x64.msi"
-[uri] $global:Powershell732URI       = "https://github.com/PowerShell/PowerShell/releases/download/v7.1.0/PowerShell-7.1.0-win-x86.msi"
-
 [bool]  $Global:LocalSettingsSuccessfullyLoaded  = $true
 
 #VSCode config
