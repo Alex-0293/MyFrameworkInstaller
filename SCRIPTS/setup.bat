@@ -1,2 +1,3 @@
 set SetupBatPath=%CD%\setup.bat
 powershell -executionpolicy bypass -Command "& { $Global:MyFrameworkBootstrapperURI = 'https://raw.githubusercontent.com/Alex-0293/MyFrameworkInstaller/master/SCRIPTS/MyFrameworkBootstrapper.ps1'; $MyFrameworkBootstrapper = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkBootstrapperURI  -ErrorAction SilentlyContinue; Invoke-Expression $MyFrameworkBootstrapper  -ErrorAction SilentlyContinue;}"
+exit

@@ -474,11 +474,10 @@ function Remove-FromStartUp {
     }
     
     Remove-FromStartUp -ShortCutName "MyFrameworkInstaller"
+    Stop-Transcript
 
     $GitHubRepositoryCloneScript = "$($Global:gsProjectServicesFolderPath)\GitHubRepositoryClone\$($Global:gsSCRIPTSFolder)\GitHubRepositoryClone.ps1"
     . $GitHubRepositoryCloneScript
-    
-    Stop-Transcript
     
     read-host -Prompt "Press enter key..."
     ################################# Script end here ###################################
