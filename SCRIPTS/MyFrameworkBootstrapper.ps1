@@ -637,8 +637,6 @@ Else {
     $InstallConfig | Export-Clixml -Path "$FileCashFolderPath\Config.xml"
 }
 
-Add-ToStartUp -FilePath $env:SetupBatPath -ShortCutName "MyFrameworkInstaller" -WorkingDirectory $Root
-
 $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
 if ( !$res.Command ) {
     write-host "1. Install Git."

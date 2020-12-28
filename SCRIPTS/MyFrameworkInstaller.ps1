@@ -24,216 +24,229 @@
 #>
 ################################# Script start here #################################
 Function Get-Answer {
-    <#
-        .SYNOPSIS
-            Get answer
-        .DESCRIPTION
-            Colored read host with features.
-        .EXAMPLE
-            Get-Answer -Title $Title [-ChooseFrom $ChooseFrom] [-DefaultChoose $DefaultChoose] [-Color $Color]
-        .NOTES
-            AUTHOR  Alexk
-            CREATED 26.12.20
-            VER     1
-    #>
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $True, Position = 0, HelpMessage = "Title message." )]
-            [ValidateNotNullOrEmpty()]
-            [string] $Title,
-            [Parameter(Mandatory = $false, Position = 1, HelpMessage = "Choose from list." )]
-            [string[]] $ChooseFrom,
-            [Parameter(Mandatory = $false, Position = 2, HelpMessage = "Default option." )]
-            [string] $DefaultChoose,
-            [Parameter(Mandatory = $false, Position = 3, HelpMessage = "Two view colors." )]
-            [String[]] $Color,
-            [Parameter(Mandatory = $false, Position = 4, HelpMessage = "Add new line at the end." )]
-            [Switch] $AddNewLine
-        )
-        $Res = $null
-    
-        write-host ""
-    
-        if ( $ChooseFrom ) {
-            $OptionSeparator = "/"
-            $ChoseFromString = ""
-    
-            foreach ( $item in $ChooseFrom ) {
-                if ( $item.toupper() -ne $DefaultChoose.toupper() ){
-                    $ChoseFromString += "$($item.toupper())$OptionSeparator"
-                }
-                Else {
-                    $ChoseFromString += "($($item.toupper()))$OptionSeparator"
-                }
+<#
+    .SYNOPSIS
+        Get answer
+    .DESCRIPTION
+        Colored read host with features.
+    .EXAMPLE
+        Get-Answer -Title $Title [-ChooseFrom $ChooseFrom] [-DefaultChoose $DefaultChoose] [-Color $Color]
+    .NOTES
+        AUTHOR  Alexk
+        CREATED 26.12.20
+        VER     1
+#>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $True, Position = 0, HelpMessage = "Title message." )]
+        [ValidateNotNullOrEmpty()]
+        [string] $Title,
+        [Parameter(Mandatory = $false, Position = 1, HelpMessage = "Choose from list." )]
+        [string[]] $ChooseFrom,
+        [Parameter(Mandatory = $false, Position = 2, HelpMessage = "Default option." )]
+        [string] $DefaultChoose,
+        [Parameter(Mandatory = $false, Position = 3, HelpMessage = "Two view colors." )]
+        [String[]] $Color,
+        [Parameter(Mandatory = $false, Position = 4, HelpMessage = "Add new line at the end." )]
+        [Switch] $AddNewLine
+    )
+    $Res = $null
+
+    write-host ""
+
+    if ( $ChooseFrom ) {
+        $OptionSeparator = "/"
+        $ChoseFromString = ""
+
+        foreach ( $item in $ChooseFrom ) {
+            if ( $item.toupper() -ne $DefaultChoose.toupper() ){
+                $ChoseFromString += "$($item.toupper())$OptionSeparator"
             }
-    
-            $ChoseFromString = $ChoseFromString.Substring(0,($ChoseFromString.Length-$OptionSeparator.Length))
-    
-            $Message = "$Title [$ChoseFromString]"
-    
-            $ChooseFromUpper = @()
-            foreach ( $item in $ChooseFrom ){
-                $ChooseFromUpper += $item.ToUpper()
-            }
-            if ( $DefaultChoose ){
-                $ChooseFromUpper += ""
-            }
-    
-            while ( $res -notin $ChooseFromUpper ) {
-                if ( $Color ) {
-                    write-host -object "$Title[" -ForegroundColor $Color[0] -NoNewline
-                    write-host -object "$ChoseFromString" -ForegroundColor $Color[1] -NoNewline
-                    write-host -object "]" -ForegroundColor $Color[0] -NoNewline
-                }
-                Else {
-                    write-host -object $Message -NoNewline
-                }
-                $res = Read-Host
-                if ( $DefaultChoose ){
-                    if ( $res -eq "" ) {
-                        $res = $DefaultChoose
-                    }
-                }
-    
-                $res = $res.ToUpper()
+            Else {
+                $ChoseFromString += "($($item.toupper()))$OptionSeparator"
             }
         }
-        Else {
-            write-host -object $Title -ForegroundColor $Color[0] -NoNewline
+
+        $ChoseFromString = $ChoseFromString.Substring(0,($ChoseFromString.Length-$OptionSeparator.Length))
+
+        $Message = "$Title [$ChoseFromString]"
+
+        $ChooseFromUpper = @()
+        foreach ( $item in $ChooseFrom ){
+            $ChooseFromUpper += $item.ToUpper()
+        }
+        if ( $DefaultChoose ){
+            $ChooseFromUpper += ""
+        }
+
+        while ( $res -notin $ChooseFromUpper ) {
+            if ( $Color ) {
+                write-host -object "$Title[" -ForegroundColor $Color[0] -NoNewline
+                write-host -object "$ChoseFromString" -ForegroundColor $Color[1] -NoNewline
+                write-host -object "]" -ForegroundColor $Color[0] -NoNewline
+            }
+            Else {
+                write-host -object $Message -NoNewline
+            }
             $res = Read-Host
-        }
-    
-        write-host -object "Selected: " -ForegroundColor $Color[0] -NoNewline
-        write-host -object "$res" -ForegroundColor $Color[1] -NoNewline
-    
-        if ( $AddNewLine ){
-            Write-host ""
-        }
-    
-        return $Res
-    
-    }
-    Function Start-Programm {
-        param (
-            [string] $Programm,
-            [string[]] $Arguments,
-            [string] $Description
-        )
-    
-        $PSO = [PSCustomObject]@{
-            Programm    = $Programm
-            Arguments   = $null
-            Description = $Description
-            Command     = get-command $Programm -ErrorAction SilentlyContinue
-            Object      = $null        
-            Output      = $null 
-            ErrorOutput = $null
-        }
-    
-        if ( $Description ){
-            write-host $Description -ForegroundColor Green
-        }    
-        
-        if ( $PSO.Command ) {
-            if ( $PSO.Command.path ) {
-                $ProgPath    = $PSO.Command.path
-                $Output      = "$($Env:temp)\Output.txt"
-                $ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
-    
-                switch ( $PSO.Command.name ) {
-                    "msiexec.exe" {  
-                        $MSIInstallerLogFilePath = "$($Env:TEMP)\msi.log"
-                        $AddLog = $true
-                        foreach ( $item in $Arguments ){
-                            if ( $item.trim() -like "/LIME*"){
-                                $AddLog = $False
-                            }
-                        }
-                        if ( $AddLog ){
-                            $Arguments += "/LIME `"$($MSIInstallerLogFilePath)`""
-                        }
-                    }
-                    "wusa.exe" {  
-                        $WUSALogFilePath = "$($Env:TEMP)\wusa.etl"
-                        $AddLog = $true
-                        foreach ( $item in $Arguments ){
-                            if ( $item.trim() -like "/log:*"){
-                                $AddLog = $False
-                            }
-                        }
-                        if ( $AddLog ){
-                            $Arguments += "/log:`"$($WUSALogFilePath)`""
-                        }
-                    }
-                    Default {}
-                }
-    
-                $PSO.Arguments = $Arguments
-    
-                $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -RedirectStandardOutput $Output -RedirectStandardError $ErrorOutput            
-                
-                if ($Res.HasExited) {
-                    
-                    $PSO.Object = $res
-                    $PSO.output = Get-Content -path $Output -ErrorAction SilentlyContinue
-                    Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
-                    $PSO.ErrorOutput = Get-Content -path $ErrorOutput -ErrorAction SilentlyContinue
-                    Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
-                    
-                    switch ( $PSO.Command.name ) {
-                        "msiexec.exe" {
-                            $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
-                            Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue                        
-                        }
-                        "wusa.exe" {                      
-                            $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
-                            Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue 
-                            $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
-                            Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue                       
-                        }
-                        Default {
-                            
-                        }
-                    }
-    
-                    switch ( $Res.ExitCode ) {
-                        0 { 
-                            Write-host "    Successfully finished." -ForegroundColor green                
-                        }
-                        Default { 
-                            if ( $PSO.ErrorOutput ) {
-                                write-host "Error output:"       -ForegroundColor DarkRed
-                                write-host "============="       -ForegroundColor DarkRed
-                                write-host "$($PSO.ErrorOutput)" -ForegroundColor red
-                            }
-    
-                            write-host ""
-                            
-                            if ( $PSO.Output ) {
-                                write-host "Std output:"    -ForegroundColor DarkRed
-                                write-host "============="  -ForegroundColor DarkRed
-                                write-host "$($PSO.Output)" -ForegroundColor red                        
-                            }
-                        }
-                    }
-                }
-                Else {
-                    Write-host "Error occured!" -ForegroundColor red
+            if ( $DefaultChoose ){
+                if ( $res -eq "" ) {
+                    $res = $DefaultChoose
                 }
             }
-            else{
-                Write-host "Command [$Programm] not found!" -ForegroundColor red
+
+            $res = $res.ToUpper()
+        }
+    }
+    Else {
+        write-host -object $Title -ForegroundColor $Color[0] -NoNewline
+        $res = Read-Host
+    }
+
+    write-host -object "Selected: " -ForegroundColor $Color[0] -NoNewline
+    write-host -object "$res" -ForegroundColor $Color[1] -NoNewline
+
+    if ( $AddNewLine ){
+        Write-host ""
+    }
+
+    return $Res
+    
+}
+Function Start-Programm {
+    param (
+        [string] $Programm,
+        [string[]] $Arguments,
+        [string] $Description
+    )
+
+    $PSO = [PSCustomObject]@{
+        Programm    = $Programm
+        Arguments   = $null
+        Description = $Description
+        Command     = get-command $Programm -ErrorAction SilentlyContinue
+        Object      = $null        
+        Output      = $null 
+        ErrorOutput = $null
+    }
+
+    if ( $Description ){
+        write-host $Description -ForegroundColor Green
+    }    
+    
+    if ( $PSO.Command ) {
+        if ( $PSO.Command.path ) {
+            $ProgPath    = $PSO.Command.path
+            $Output      = "$($Env:temp)\Output.txt"
+            $ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
+
+            switch ( $PSO.Command.name ) {
+                "msiexec.exe" {  
+                    $MSIInstallerLogFilePath = "$($Env:TEMP)\msi.log"
+                    $AddLog = $true
+                    foreach ( $item in $Arguments ){
+                        if ( $item.trim() -like "/LIME*"){
+                            $AddLog = $False
+                        }
+                    }
+                    if ( $AddLog ){
+                        $Arguments += "/LIME `"$($MSIInstallerLogFilePath)`""
+                    }
+                }
+                "wusa.exe" {  
+                    $WUSALogFilePath = "$($Env:TEMP)\wusa.etl"
+                    $AddLog = $true
+                    foreach ( $item in $Arguments ){
+                        if ( $item.trim() -like "/log:*"){
+                            $AddLog = $False
+                        }
+                    }
+                    if ( $AddLog ){
+                        $Arguments += "/log:`"$($WUSALogFilePath)`""
+                    }
+                }
+                Default {}
+            }
+
+            $PSO.Arguments = $Arguments
+
+            $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -RedirectStandardOutput $Output -RedirectStandardError $ErrorOutput            
+            
+            if ($Res.HasExited) {
+                
+                $PSO.Object = $res
+                $PSO.output = Get-Content -path $Output -ErrorAction SilentlyContinue
+                Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
+                $PSO.ErrorOutput = Get-Content -path $ErrorOutput -ErrorAction SilentlyContinue
+                Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
+                
+                switch ( $PSO.Command.name ) {
+                    "msiexec.exe" {
+                        $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
+                        Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue                        
+                    }
+                    "wusa.exe" {                      
+                        $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue 
+                        $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue                       
+                    }
+                    Default {
+                        
+                    }
+                }
+
+                switch ( $Res.ExitCode ) {
+                    0 { 
+                        Write-host "    Successfully finished." -ForegroundColor green                
+                    }
+                    Default { 
+                        if ( $PSO.ErrorOutput ) {
+                            write-host "Error output:"       -ForegroundColor DarkRed
+                            write-host "============="       -ForegroundColor DarkRed
+                            write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        }
+
+                        write-host ""
+                        
+                        if ( $PSO.Output ) {
+                            write-host "Std output:"    -ForegroundColor DarkRed
+                            write-host "============="  -ForegroundColor DarkRed
+                            write-host "$($PSO.Output)" -ForegroundColor red                        
+                        }
+                    }
+                }
+            }
+            Else {
+                Write-host "Error occured!" -ForegroundColor red
             }
         }
         else{
             Write-host "Command [$Programm] not found!" -ForegroundColor red
         }
+    }
+    else{
+        Write-host "Command [$Programm] not found!" -ForegroundColor red
+    }
+
+    Return $PSO
+}
+function Update-Environment {
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+function Remove-FromStartUp {
+    Param (
+        [string] $ShortCutName
+    )    
     
-        Return $PSO
+    if ( $ShortCutName ) {
+        $UserStartUpFolderPath = "$($Env:APPDATA)\Microsoft\Windows\Start Menu\Programs\Startup"
+        
+        $ShorCutPath = "$UserStartUpFolderPath\$($ShortCutName).lnk"
+        write-host "Removing shortcut [$ShortCutName] from user startup folder"
+        remove-item -path $ShorCutPath -Force        
     }
-    function Update-Environment {
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-    }
+}
     #remove it
     #$OSBit = 64
     
@@ -485,9 +498,14 @@ Function Get-Answer {
         Set-Location -Path $Global:MyProjectFolderPath
         & code "`"$($Global:MyProjectFolderPath)`""
     }
+    
+    Remove-FromStartUp -ShortCutName "MyFrameworkInstaller"
+
     $GitHubRepositoryCloneScript = "$($Global:gsProjectServicesFolderPath)\GitHubRepositoryClone\$($Global:gsSCRIPTSFolder)\GitHubRepositoryClone.ps1"
     . $GitHubRepositoryCloneScript
+    
     Stop-Transcript
+    
     read-host -Prompt "Press enter key..."
     ################################# Script end here ###################################
     
