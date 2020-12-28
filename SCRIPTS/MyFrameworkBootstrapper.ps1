@@ -634,6 +634,8 @@ Else {
     $InstallConfig | Export-Clixml -Path "$FileCashFolderPath\Config.xml"
 }
 
+Add-ToStartUp -FilePath $env:SetupBatPath -ShortCutName "MyFrameworkInstaller" -WorkingDirectory $Root
+
 $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
 if ( !$res.Command ) {
     write-host "1. Install Git."
@@ -682,8 +684,7 @@ if ( $PSVer -lt 5 ) {
         if ( $OSVer -and $OSBit ) {
             $WMF5 = (Get-Variable -name "WMF5_$($OSVer)_$($OSBit)").Value
             $Global:WMF5FileName = "$FileCashFolderPath\$(split-path -path $WMF5 -Leaf)"
-            $ScriptPath = $env:SetupBatPath
-            Add-ToStartUp -FilePath $ScriptPath -ShortCutName "MyFrameworkInstaller" -WorkingDirectory $Root
+            Add-ToStartUp -FilePath $env:SetupBatPath -ShortCutName "MyFrameworkInstaller" -WorkingDirectory $Root
             If ( $WMF5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Remove-Item -Path $Global:WMF5FileName
