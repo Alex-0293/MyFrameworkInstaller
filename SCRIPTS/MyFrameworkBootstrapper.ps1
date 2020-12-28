@@ -492,6 +492,10 @@ Function Start-Programm {
     Return $PSO
 }
 
+function Update-Environment {
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+
 clear-host
 Start-Transcript
 
@@ -602,6 +606,7 @@ if ( !$res.Command ) {
             if (!$res){
                 exit 1
             }
+            Update-Environment
         }
         Else {
             Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
