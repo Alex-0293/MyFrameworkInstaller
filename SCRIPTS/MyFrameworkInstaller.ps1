@@ -232,6 +232,7 @@ Function Start-Programm {
     Return $PSO
 }
 function Update-Environment {
+    write-host "Refresh environment..." -ForegroundColor Yellow
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 }
 #remove it
@@ -244,7 +245,9 @@ if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
     Set-ExecutionPolicy RemoteSigned -Scope Process
     $GSudoInstall = Invoke-WebRequest -UseBasicParsing $Global:GSudoInstallURL
     Invoke-Expression $GSudoInstall
+    Update-Environment
 }
+
 
 $PSMaximumVer = ($psversiontable.PSCompatibleVersions.major | Measure-Object -max | Select-Object maximum).Maximum
 if ( $PSMaximumVer -ge 7 ){
@@ -272,10 +275,7 @@ if ( !$IsPS7Installed ) {
             if ( test-path -path $Global:Powershell7FileName ){                
 
                 $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/qn','/promptrestart') -Description "    Installing Powershell 7."
-                
-                # if ( !(($res.Output -like "*Configuration completed successfully.*") -or ($res.Output -like "*Installation completed successfully.*"))){
-                #     write-host $res.Output -ForegroundColor Red
-                # } 
+                Update-Environment
             }
             Else {
                 Write-Host "Error downloading file [$Global:Powershell7FileName]!" -ForegroundColor Red
@@ -312,9 +312,7 @@ if ( !$CodeCommand ) {
             if ( test-path -path $Global:VSCodeFileName ){
                 Unblock-File -path $Global:VSCodeFileName
                 $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent', '/MERGETASKS=!runcode') -Description "    Installing VSCode."
-                # if ( $res.ErrorOutput ){
-                #     write-host $res.ErrorOutput -ForegroundColor Red
-                # }
+                Update-Environment
             }
             Else {
                 Write-Host "Error downloading file [$Global:VSCodeFileName]!" -ForegroundColor Red
