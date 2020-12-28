@@ -466,6 +466,13 @@ Function Start-Programm {
                         Write-host "    Successfully finished." -ForegroundColor green                
                     }
                     Default { 
+                        write-host "Error output:"       -ForegroundColor DarkRed
+                        write-host "============="       -ForegroundColor DarkRed
+                        write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        write-host ""
+                        write-host "Std output:"    -ForegroundColor DarkRed
+                        write-host "============="  -ForegroundColor DarkRed
+                        write-host "$($PSO.Output)" -ForegroundColor red                        
                         #Write-host "Error [$($Res.ExitCode)] occured!" -ForegroundColor red
                     }
                 }
@@ -484,6 +491,7 @@ Function Start-Programm {
 
     Return $PSO
 }
+
 clear-host
 Start-Transcript
 
@@ -497,12 +505,6 @@ Start-Transcript
 [uri] $Global:GSudoInstallURL      = "https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1"
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
-    Set-ExecutionPolicy RemoteSigned -Scope Process
-    $GSudoInstall = Invoke-WebRequest -UseBasicParsing $Global:GSudoInstallURL
-    Invoke-Expression $GSudoInstall
-}
 
 $Data = @()
 $PSO = [PSCustomObject]@{
@@ -641,6 +643,40 @@ Else {
     Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"   
      
 }
+
+write-host "Check powershell version."
+$PSVer = [int16] $PSVersionTable.PSVersion.major
+write-host "    Powershel version [$PSVer]."
+if ( $PSVer -lt 5 ) {
+    $Answer = Get-Answer -Title "Do you want to update host powershell version [$PSVer] to [5]? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
+
+    if ( $Answer -eq "Y" ) {
+        $InstallWMF5 = $true
+        if ( $OSVer -and $OSBit ) {
+            $WMF5 = (Get-Variable -name "WMF5_$($OSVer)_$($OSBit)").Value
+            $Global:WMF5FileName = "$($Env:TEMP)\$(split-path -path $WMF5 -Leaf)"
+            If ( $WMF5 ) {
+                if ( test-path -path $Global:WMF5FileName ){
+                    Remove-Item -Path $Global:WMF5FileName
+                }
+
+                Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
+                if ( test-path -path $Global:WMF5FileName ){
+                    Unblock-File -path $Global:WMF5FileName                    
+                    $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
+                }
+                Else {
+                    Write-Host "Error downloading file [$Global:WMF5FileName]!" -ForegroundColor Red
+                }
+            }       
+
+        }
+        Else {
+            exit 1
+        }
+    }
+}
+
 
 
 $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
