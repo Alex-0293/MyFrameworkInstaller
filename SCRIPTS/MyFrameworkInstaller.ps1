@@ -249,8 +249,11 @@ function Remove-FromStartUp {
 }
     #remove it
     #$OSBit = 64
+    Start-Transcript
+
     $root = "$($Env:USERPROFILE)\Documents\MyProjects"
     $FileCashFolderPath = "$Root\Install"
+    Start-Transcript -Path "$FileCashFolderPath\setup.log"
     write-host "File cache folder [$FileCashFolderPath]."
     if ( test-path $FileCashFolderPath ){
         [psobject]$InstallConfig = Import-Clixml -path "$FileCashFolderPath\Config.xml"  

@@ -758,6 +758,7 @@ $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCR
 write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
 
 Update-Environment
+Stop-Transcript
 
 & pwsh.exe $MyFrameworkInstallerPath
 
