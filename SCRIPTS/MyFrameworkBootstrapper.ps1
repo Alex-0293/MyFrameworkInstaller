@@ -385,32 +385,93 @@ Function Start-Programm {
         [string] $Description
     )
 
-    $Success = $true
+    $PSO = [PSCustomObject]@{
+        Programm    = $Programm
+        Arguments   = $null
+        Description = $Description
+        Command     = get-command $Programm -ErrorAction SilentlyContinue
+        Object      = $null        
+        Output      = $null 
+        ErrorOutput = $null
+    }
 
     if ( $Description ){
         write-host $Description -ForegroundColor Green
-    }
-    $Command = get-command $Programm
+    }    
     
-    if ( $Command ) {
-        if ( $Command.path ) {
-            $ProgPath = $Command.path
-            $Res = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments 
+    if ( $PSO.Command ) {
+        if ( $PSO.Command.path ) {
+            $ProgPath    = $PSO.Command.path
+            $Output      = "$($Env:temp)\Output.txt"
+            $ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
 
+            switch ( $PSO.Command.name ) {
+                "msiexec.exe" {  
+                    $MSIInstallerLogFilePath = "$($Env:TEMP)\msi.log"
+                    $AddLog = $true
+                    foreach ( $item in $Arguments ){
+                        if ( $item.trim() -like "/LIME*"){
+                            $AddLog = $False
+                        }
+                    }
+                    if ( $AddLog ){
+                        $Arguments += "/LIME `"$($MSIInstallerLogFilePath)`""
+                    }
+                }
+                "wusa.exe" {  
+                    $WUSALogFilePath = "$($Env:TEMP)\wusa.etl"
+                    $AddLog = $true
+                    foreach ( $item in $Arguments ){
+                        if ( $item.trim() -like "/log:*"){
+                            $AddLog = $False
+                        }
+                    }
+                    if ( $AddLog ){
+                        $Arguments += "/log:`"$($WUSALogFilePath)`""
+                    }
+                }
+                Default {}
+            }
+
+            $PSO.Arguments = $Arguments
+
+            $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -RedirectStandardOutput $Output -RedirectStandardError $ErrorOutput            
+            
             if ($Res.HasExited) {
+                
+                $PSO.Object = $res
+                $PSO.output = Get-Content -path $Output -ErrorAction SilentlyContinue
+                Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
+                $PSO.ErrorOutput = Get-Content -path $ErrorOutput -ErrorAction SilentlyContinue
+                Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
+                
+                switch ( $PSO.Command.name ) {
+                    "msiexec.exe" {
+                        $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
+                        Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue                        
+                    }
+                    "wusa.exe" {                      
+                        $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue 
+                        $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue                       
+                    }
+                    Default {
+                        
+                    }
+                }
+
                 switch ( $Res.ExitCode ) {
                     0 { 
-                        Write-host "Successfully finished." -ForegroundColor green                
+                        Write-host "    Successfully finished." -ForegroundColor green                
                     }
                     Default { 
-                        Write-host "Error occured!" -ForegroundColor red
-                        $Success = $false
+                        #Write-host "Error [$($Res.ExitCode)] occured!" -ForegroundColor red
                     }
                 }
             }
             Else {
                 Write-host "Error occured!" -ForegroundColor red
-                $Success = $false
             }
         }
         else{
@@ -421,9 +482,9 @@ Function Start-Programm {
         Write-host "Command [$Programm] not found!" -ForegroundColor red
     }
 
-    Return $Success
-
+    Return $PSO
 }
+clear-host
 Start-Transcript
 
 #Git
@@ -434,6 +495,8 @@ Start-Transcript
 [uri] $Global:MyFrameworkInstaller = "https://github.com/Alex-0293/MyFrameworkInstaller.git"
 
 [uri] $Global:GSudoInstallURL      = "https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1"
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
     Set-ExecutionPolicy RemoteSigned -Scope Process
@@ -524,7 +587,7 @@ switch -Wildcard ( $OSInfo.OSArchitecture ) {
 }
 
 $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
-if ( !$res ) {
+if ( !$res.Command ) {
     write-host "1. Install Git."
     $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
     If ( $GitURI ) {
@@ -546,7 +609,7 @@ if ( !$res ) {
     }  
 }
 Else {
-    & git --version
+    $res.output
 }  
 write-host "2. Clone my framework installer"
 $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
@@ -565,14 +628,24 @@ if ( !(test-path -path $ProjectServicesFolderPath) ){
 }
 
 Set-Location -Path $ProjectServicesFolderPath
-& git clone $Global:MyFrameworkInstaller
+$res = Start-Programm -Programm "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
+if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
+    Write-host "    Folder already exist." -ForegroundColor yellow  
+}
+Else {
+    if ( $res.ErrorOutput ){
+        write-host $res.ErrorOutput -ForegroundColor Red
+    }
+    Else {
+        Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
+        Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"   
+    }      
+}
 
 
-Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
-Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"
-$MyFrameworkInstaller = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
-write-host "Starting [$MyFrameworkInstaller]." -ForegroundColor Green
+$MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
+write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
 
-. $MyFrameworkInstaller
+. $MyFrameworkInstallerPath
 ################################# Script end here ###################################
 

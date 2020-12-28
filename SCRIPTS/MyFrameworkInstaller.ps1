@@ -120,32 +120,93 @@ Function Start-Programm {
         [string] $Description
     )
 
-    $Success = $true
+    $PSO = [PSCustomObject]@{
+        Programm    = $Programm
+        Arguments   = $null
+        Description = $Description
+        Command     = get-command $Programm -ErrorAction SilentlyContinue
+        Object      = $null        
+        Output      = $null 
+        ErrorOutput = $null
+    }
 
     if ( $Description ){
         write-host $Description -ForegroundColor Green
-    }
-    $Command = get-command $Programm
+    }    
     
-    if ( $Command ) {
-        if ( $Command.path ) {
-            $ProgPath = $Command.path
-            $Res = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments 
+    if ( $PSO.Command ) {
+        if ( $PSO.Command.path ) {
+            $ProgPath    = $PSO.Command.path
+            $Output      = "$($Env:temp)\Output.txt"
+            $ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
 
+            switch ( $PSO.Command.name ) {
+                "msiexec.exe" {  
+                    $MSIInstallerLogFilePath = "$($Env:TEMP)\msi.log"
+                    $AddLog = $true
+                    foreach ( $item in $Arguments ){
+                        if ( $item.trim() -like "/LIME*"){
+                            $AddLog = $False
+                        }
+                    }
+                    if ( $AddLog ){
+                        $Arguments += "/LIME `"$($MSIInstallerLogFilePath)`""
+                    }
+                }
+                "wusa.exe" {  
+                    $WUSALogFilePath = "$($Env:TEMP)\wusa.etl"
+                    $AddLog = $true
+                    foreach ( $item in $Arguments ){
+                        if ( $item.trim() -like "/log:*"){
+                            $AddLog = $False
+                        }
+                    }
+                    if ( $AddLog ){
+                        $Arguments += "/log:`"$($WUSALogFilePath)`""
+                    }
+                }
+                Default {}
+            }
+
+            $PSO.Arguments = $Arguments
+
+            $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -RedirectStandardOutput $Output -RedirectStandardError $ErrorOutput            
+            
             if ($Res.HasExited) {
+                
+                $PSO.Object = $res
+                $PSO.output = Get-Content -path $Output -ErrorAction SilentlyContinue
+                Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
+                $PSO.ErrorOutput = Get-Content -path $ErrorOutput -ErrorAction SilentlyContinue
+                Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
+                
+                switch ( $PSO.Command.name ) {
+                    "msiexec.exe" {
+                        $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
+                        Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue                        
+                    }
+                    "wusa.exe" {                      
+                        $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue 
+                        $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue                       
+                    }
+                    Default {
+                        
+                    }
+                }
+
                 switch ( $Res.ExitCode ) {
                     0 { 
-                        Write-host "Successfully finished." -ForegroundColor green                
+                        Write-host "    Successfully finished." -ForegroundColor green                
                     }
                     Default { 
-                        Write-host "Error occured!" -ForegroundColor red
-                        $Success = $false
+                        #Write-host "Error [$($Res.ExitCode)] occured!" -ForegroundColor red
                     }
                 }
             }
             Else {
                 Write-host "Error occured!" -ForegroundColor red
-                $Success = $false
             }
         }
         else{
@@ -156,8 +217,7 @@ Function Start-Programm {
         Write-host "Command [$Programm] not found!" -ForegroundColor red
     }
 
-    Return $Success
-
+    Return $PSO
 }
 #remove it
 #$OSBit = 64
@@ -185,9 +245,16 @@ if ( $PSVer -lt 5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Unblock-File -path $Global:WMF5FileName                    
                     $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet','/norestart') -Description "    Installing WMF 5.1."
-                    if (!$res){
+                    
+                    if (!$res){                        
                         start-sleep -Seconds 10
                         exit 1
+                    }
+                    else {
+                        # if (!($res.Output -like "*Update is already installed…*") ){
+                        #     start-sleep -Seconds 10
+                        #     exit 1
+                        # }
                     }                    
                 }
                 Else {
@@ -222,11 +289,11 @@ if ( !$IsPS7Installed ) {
 
             Invoke-WebRequest -Uri $Powershell7URI -OutFile $Global:Powershell7FileName
             if ( test-path -path $Global:Powershell7FileName ){
-                Unblock-File -path $Global:Powershell7FileName            
-                $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/quiet','/qn','/norestart') -Description "    Installing Powershell 7."
-                if (!$res){
-                    start-sleep -Seconds 10
-                    exit 1
+                Unblock-File -path $Global:Powershell7FileName
+
+                $res = Start-Programm -Programm "msiexec" -Arguments @('/i',$Global:Powershell7FileName,'/qn','/promptrestart') -Description "    Installing Powershell 7."
+                if ( !($res.Output -like "*Configuration completed successfully.*") ){
+                    write-host $res.Output -ForegroundColor Red
                 } 
             }
             Else {
@@ -264,9 +331,8 @@ if ( !$CodeCommand ) {
             if ( test-path -path $Global:VSCodeFileName ){
                 Unblock-File -path $Global:VSCodeFileName
                 $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent') -Description "    Installing VSCode."
-                if (!$res){
-                    start-sleep -Seconds 10
-                    exit 1
+                if ( $res.ErrorOutput ){
+                    write-host $res.ErrorOutput -ForegroundColor Red
                 }
             }
             Else {
@@ -280,25 +346,32 @@ $Answer = Get-Answer -Title "Do you want to configure VSCode? " -ChooseFrom "y",
 if ( $Answer -eq "Y" ) {
     if ( $CodeCommand ) {
         write-host "4. Config VSCode."
-        write-host "   install powershell extention"
-        & code --install-extension ms-vscode.powershell
-        write-host "   install icon pack"
-        & code --install-extension pkief.material-icon-theme
+
+        $res = Start-Programm -Programm "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell extention."
+        if ( $res.ErrorOutput ){
+            write-host $res.ErrorOutput -ForegroundColor Red
+        }
+
+        $res = Start-Programm -Programm "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack extention."
+        if ( $res.ErrorOutput ){
+            write-host $res.ErrorOutput -ForegroundColor Red
+        }
+
         write-host "   create VSCode user config"
         Set-Content -path $Global:VSCodeConfigFilePath -Value $Global:VSCodeConfig -Force
+
         write-host "   create MyProject folder"
         New-Item -Path $Global:MyProjectFolderPath -ItemType Directory
+
         write-host "   create MyProject\Projects folder"
         New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory
+
         $StartVSCode = $True    
     }
     Else {
         Write-Host "Code not found!" -ForegroundColor red
     }
 }
-
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
 
 $ProjectsFolderPath        = "$($Global:MyProjectFolderPath)\Projects"
 if (-not (Test-Path $ProjectsFolderPath) ) {
@@ -323,12 +396,20 @@ if (-not (Test-Path $DisabledProjectsFolderPath) ) {
 
 if (-not (test-path "$ProjectsFolderPath\GlobalSettings")){    
     Set-Location $ProjectsFolderPath
-    & git.exe clone $Global:GlobalSettingsURL
-    Copy-Item -Path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1" -Destination "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings.ps1"
-    Remove-Item -path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1"
+    $res = Start-Programm -Programm "git" -Arguments @('clone', $Global:GlobalSettingsURL ) -Description "    Git clone [$Global:GlobalSettingsURL]."
+    if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
+        Write-host "    Folder already exist." -ForegroundColor yellow  
+    }
+    Else {
+        if ( $res.ErrorOutput ){
+            write-host $res.ErrorOutput -ForegroundColor Red
+        }
+        Else {
+            Copy-Item -Path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1" -Destination "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings.ps1"
+            Remove-Item -path "$ProjectsFolderPath\GlobalSettings\SETTINGS\Settings-empty.ps1"
+        }        
+    }    
 }
-
-
 
 $GlobalSettingsScriptPath = "$ProjectsFolderPath\GlobalSettings\SCRIPTS"
 gsudo "[Environment]::SetEnvironmentVariable( 'AlexKFrameworkInitScript' , \""$GlobalSettingsScriptPath\Init.ps1\"", [EnvironmentVariableTarget]::Machine )"    
@@ -342,7 +423,15 @@ if ( !(test-path -path $ModulePath) ){
 if (-not (test-path "$ModulePath\AlexkUtils")){
     if ((test-path "$ModulePath")){
         Set-Location -path $ModulePath
-        gsudo git.exe clone $Global:AlexKUtilsModuleURL 
+        $res = Start-Programm -Programm "git" -Arguments @('clone', $Global:AlexKUtilsModuleURL ) -Description "    Git clone [$Global:AlexKUtilsModuleURL]."
+        if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
+            Write-host "    Folder already exist." -ForegroundColor yellow  
+        }
+        Else {
+            if ( $res.ErrorOutput ){
+                write-host $res.ErrorOutput -ForegroundColor Red
+            }                   
+        } 
     }
     Else {
         Write-Host "Path [$ModulePath] not found!" -ForegroundColor red
@@ -353,7 +442,15 @@ if (-not (test-path "$ModulePath\AlexKBuildTools")){
     Set-Location -path $ModulePath
     if ((test-path "$ModulePath")){
         Set-Location -path $ModulePath
-        gsudo git.exe clone $Global:AlexKBuildToolsModuleURL 
+        $res = Start-Programm -Programm "git" -Arguments @('clone', $Global:AlexKBuildToolsModuleURL ) -Description "    Git clone [$Global:AlexKBuildToolsModuleURL]."
+        if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
+            Write-host "    Folder already exist." -ForegroundColor yellow  
+        }
+        Else {
+            if ( $res.ErrorOutput ){
+                write-host $res.ErrorOutput -ForegroundColor Red
+            }                   
+        } 
     }
     Else {
         Write-Host "Path [$ModulePath] not found!" -ForegroundColor red
@@ -362,9 +459,19 @@ if (-not (test-path "$ModulePath\AlexKBuildTools")){
 
 if (-not (test-path "$ProjectServicesFolderPath\GitHubRepositoryClone")){    
     Set-Location $ProjectServicesFolderPath
-    & git.exe clone $Global:GitHubRepositoryCloneURL
-    Copy-Item -Path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings.ps1"
-    Remove-Item -path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1"
+    $res = Start-Programm -Programm "git" -Arguments @('clone', $Global:GitHubRepositoryCloneURL ) -Description "    Git clone [$Global:GitHubRepositoryCloneURL]."
+    if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
+        Write-host "    Folder already exist." -ForegroundColor yellow  
+    }
+    Else {
+        if ( $res.ErrorOutput ){
+            write-host $res.ErrorOutput -ForegroundColor Red
+        }
+        Else {
+            Copy-Item -Path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\GlobalSettings\SETTINGS\Settings.ps1"
+            Remove-Item -path "$ProjectServicesFolderPath\GitHubRepositoryClone\SETTINGS\Settings-empty.ps1"
+        }        
+    }    
 } 
 
 & git.exe config --global user.name  $Global:GitUserName
@@ -420,5 +527,6 @@ if ( $StartVSCode ){
     & code "`"$($Global:MyProjectFolderPath)`""
 }
 Stop-Transcript
+read-host -Prompt "Press any key..."
 ################################# Script end here ###################################
 
