@@ -499,10 +499,22 @@ function Update-Environment {
     write-host "Refresh environment..." -ForegroundColor Yellow
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 }
-function Add-ToAutorun {
+function Add-ToStartUp {
     Param (
-        $FilePath
+        [string] $FilePath,
+        [string] $ShortCutName,
+        [string] $WorkingDirectory
     )
+
+    $UserStartUpFolderPath = "$($Env:APPDATA)\Microsoft\Windows\Start Menu\Programs\Startup"
+    
+    $WshShell                  = New-Object -comObject WScript.Shell
+
+    $Shortcut                  = $WshShell.CreateShortcut("$UserStartUpFolderPath\$ShortCutName.lnk")
+    $Shortcut.TargetPath       = $FilePath
+    #$Shortcut.Arguments        = "/iq `"custom.bgi`" /accepteula /timer:0"
+    $Shortcut.WorkingDirectory = $WorkingDirectory
+    $Shortcut.Save()
 }
 function New-Folder {
     Param (
@@ -604,71 +616,59 @@ Else {
             $Global:OSBit = $null
             Write-host "Unknown OS bitness [$OSInfo.OSArchitecture]!" -ForegroundColor red
         }
-    }
+    } 
 
-    $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
-    if ( !$res.Command ) {
-        write-host "1. Install Git."
-        $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
-        If ( $GitURI ) {
-            if ( test-path -path $Global:GitFileName ){
-                Remove-Item -Path $Global:GitFileName
-            }
-
-            Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
-            if ( test-path -path $Global:GitFileName ){
-                Unblock-File -path $Global:GitFileName
-                $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
-                if (!$res){
-                    exit 1
-                }
-                Update-Environment
-            }
-            Else {
-                Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
-            }
-        }  
-    }
-    Else {
-        write-host "    $($res.output)"
-    }  
-
-    Update-Environment
-
-    write-host "2. Clone my framework installer"
     $ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
-    if ( !(test-path -path $ProjectServicesFolderPath) ){
-        try {
-            New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
-        }
-        Catch{
-            try {
-                gsudo New-Item -Path $ProjectServicesFolderPath -ItemType Directory | Out-Null
-            }
-            Catch {
-                Write-host "Folder path [$ProjectServicesFolderPath] cannot be created! $_" -ForegroundColor Red
-            }
-        }
-    }
-
-    Set-Location -Path $ProjectServicesFolderPath
-    $res = Start-Programm -Programm "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
-        
-    if ( $res.object.exitcode -eq 0 ){
-        Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
-        Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"   
-    }
-        
-    
+    New-Folder -FolderPath $ProjectServicesFolderPath
 
     $InstallConfig = [PSCustomObject]@{
-        MyProjectFolderPath   = $MyProjectFolderPath
-        GitUserName           = $Global:GitUserName
-        GitEmail              = $Global:GitEmail
-        FileCashFolderPath    = $FileCashFolderPath
+        MyProjectFolderPath       = $MyProjectFolderPath
+        GitUserName               = $Global:GitUserName
+        GitEmail                  = $Global:GitEmail
+        FileCashFolderPath        = $FileCashFolderPath
+        ProjectServicesFolderPath = $ProjectServicesFolderPath
+        OSVer                     = $Global:OSVer
+        OSBit                     = $Global:OSBit
     }
 
     $InstallConfig | Export-Clixml -Path "$FileCashFolderPath\Config.xml"
+}
+
+$res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
+if ( !$res.Command ) {
+    write-host "1. Install Git."
+    $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
+    If ( $GitURI ) {
+        if ( test-path -path $Global:GitFileName ){
+            Remove-Item -Path $Global:GitFileName
+        }
+
+        Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
+        if ( test-path -path $Global:GitFileName ){
+            Unblock-File -path $Global:GitFileName
+            $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
+            if (!$res){
+                exit 1
+            }
+            Update-Environment
+        }
+        Else {
+            Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
+        }
+    }  
+}
+Else {
+    write-host "    $($res.output)"
+}  
+
+write-host "2. Clone my framework installer"
+
+Set-Location -Path $ProjectServicesFolderPath
+$res = Start-Programm -Programm "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
+    
+if ( $res.object.exitcode -eq 0 ){
+    Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
+    Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"   
 }
 
 write-host "Check powershell version."
@@ -682,6 +682,8 @@ if ( $PSVer -lt 5 ) {
         if ( $OSVer -and $OSBit ) {
             $WMF5 = (Get-Variable -name "WMF5_$($OSVer)_$($OSBit)").Value
             $Global:WMF5FileName = "$FileCashFolderPath\$(split-path -path $WMF5 -Leaf)"
+            $ScriptPath = $env:SetupBatPath
+            Add-ToStartUp -FilePath $ScriptPath -ShortCutName "MyFrameworkInstaller" -WorkingDirectory $Root
             If ( $WMF5 ) {
                 if ( test-path -path $Global:WMF5FileName ){
                     Remove-Item -Path $Global:WMF5FileName
