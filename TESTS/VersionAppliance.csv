@@ -1,2 +1,3 @@
 "Hash","Merge","Author","Date","Modified","Message","HelpContent"
-"c8aaff2a80f9213a4a6d00a0b20a9ed995ce7bd8",,"AlexK","Sat Jul 11 16:10:02 2020 +0300","SCRIPTS/MyFrameworkInstaller.ps1","Add DisabledProjectsFolderPath.","True"
+"c8aaff2a80f9213a4a6d00a0b20a9ed995ce7bd8","","AlexK","Sat Jul 11 16:10:02 2020 +0300","SCRIPTS/MyFrameworkInstaller.ps1","Add DisabledProjectsFolderPath.","True"
+"201824f17a9b5d4da36f6865f1f75b9dcd172f29",,"AlexK","Mon Dec 28 21:06:06 2020 +0300",".gitignore; TESTS/VersionAppliance.csv; TESTS/functions.csv","Replace\ test\ folder\.","True"
