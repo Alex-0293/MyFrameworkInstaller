@@ -416,7 +416,7 @@ Function Start-Programm {
             }
             else {
                 if ( $RunAs ) {
-                    $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -RedirectStandardOutput $Output -RedirectStandardError $ErrorOutput -Verb RunAs
+                    $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -Verb RunAs
                 }
                 Else {
                     $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -RedirectStandardOutput $Output -RedirectStandardError $ErrorOutput
@@ -424,7 +424,7 @@ Function Start-Programm {
             }
 
 
-            if ($Res.HasExited -or $Evaluate ) {
+            if ($Res.HasExited -or $Evaluate -or $RunAs ) {
 
                 if ( !$Evaluate ) {
                     $PSO.Object = $res
@@ -637,7 +637,6 @@ Function Install-Program {
                 Else {
                     Invoke-WebRequest -Uri $ProgramURI -OutFile $Global:ProgramFileName
                 }
-
                 
                 if ( test-path -path $Global:ProgramFileName ){
                     Unblock-File -path $Global:ProgramFileName
