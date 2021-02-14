@@ -524,7 +524,7 @@ function New-Folder {
 
     if ( !(test-path $FolderPath) -or $Confirm ){
         try {
-            if ( $Confirm ){
+            if ( $Confirm -and ( test-path -path $FolderPath ) ){
                 $Answer = Get-Answer -Title "Do you want to remove existed folder [$FolderPath]? " -Color "Cyan","DarkMagenta" -AddNewLine -ChooseFrom "y","n"
                 if ( $Answer -eq "Y"){
                     Remove-Item -path $FolderPath -Force
