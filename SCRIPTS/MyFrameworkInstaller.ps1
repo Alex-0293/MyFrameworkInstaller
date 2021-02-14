@@ -30,7 +30,7 @@ param(
 
     #remove it
     #$OSBit = 64
-    Stop-Transcript
+    Stop-Transcript -ErrorAction SilentlyContinue
 
     #$root = "$($Env:USERPROFILE)\Documents\MyProjects"
     $FileCashFolderPath = "$Root\Install"

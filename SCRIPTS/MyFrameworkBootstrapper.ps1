@@ -95,7 +95,7 @@ Function Set-MyFrameworkInstaller {
     }
 }
 Function Install-Powershell7 {
-    . Functions.ps1
+    . $PWD\Functions.ps1
     write-host "3. Check powershell version."
     $PSVer = [int16] $PSVersionTable.PSVersion.major
     write-host "    Powershel version [$PSVer]."
@@ -121,7 +121,7 @@ Function Install-Powershell7 {
                     Else {
                         Write-Host "Error downloading file [$Global:WMF5FileName]!" -ForegroundColor Red
                     }
-                }       
+                }
 
             }
             Else {
@@ -132,9 +132,20 @@ Function Install-Powershell7 {
 
     $Res = Install-Program -ProgramName "pwsh.exe" -Description "Powershell 7.x" -GitRepo "PowerShell/PowerShell" -FilePartX32 "*win-x32.msi" -FilePartX64 "*win-x64.msi" -OSBit $OSBit -RunAs -Installer "msiexec" -InstallerArguments @('/i',$Global:Powershell7FileName,'/qn','/promptrestart')
 
-    $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
-    $Global:PowershellModulePath  = "c:\program files\powershell\Modules"
-    
+    if ( $Res ){
+        if ( ( $Res.output -like "*Installation completed successfully*" ) -or ( $Res.output -like "*Configuration completed successfully*" ) -or ( $Res -eq $True ) ){
+            $Global:PowershellModulePath  = "c:\program files\powershell\7\Modules"
+            return $true
+        }
+        Else {
+            $Global:PowershellModulePath  = "c:\program files\powershell\Modules"
+            return $false
+        }
+    }
+    Else {
+        $Global:PowershellModulePath  = "c:\program files\powershell\Modules"
+        return $false
+    }
 }
 Function Set-FrameworkEnvironment {
     #WMF5.1
@@ -239,11 +250,11 @@ if ( $step0 ){
             $Step3 = Install-Powershell7
             if ( $step3 ) {
                 $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
-                write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
+                
 
                 Update-Environment
+                write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
                 Stop-Transcript
-
                 & pwsh.exe $MyFrameworkInstallerPath -root `"$Global:MyProjectFolderPath`"
             }
         }
