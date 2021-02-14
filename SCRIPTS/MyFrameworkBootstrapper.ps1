@@ -527,9 +527,9 @@ function New-Folder {
     if ( !($FolderPathExist) -or $Confirm ){
         try {
             if ( $Confirm -and $FolderPathExist ){
-                $Answer = Get-Answer -Title "Do you want to remove existed folder [$FolderPath]? " -Color "Cyan","DarkMagenta" -AddNewLine -ChooseFrom "y","n"
+                $Answer = Get-Answer -Title "Do you want to remove existed folder [$FolderPath]? " -Color "Cyan","DarkMagenta" -AddNewLine -ChooseFrom "y","n" -DefaultChoose "y"
                 if ( $Answer -eq "Y"){
-                    Remove-Item -path $FolderPath -Force
+                    Remove-Item -path $FolderPath -Force -recurse
                     New-Item -Path $FolderPath -ItemType Directory | Out-Null
                 }
             }
@@ -541,7 +541,7 @@ function New-Folder {
             try {
                 if ( $Confirm ){
                     if ( $Answer -eq "Y"){
-                        gsudo Remove-Item -path $FolderPath -Force
+                        gsudo Remove-Item -path $FolderPath -Force -recurse
                         gsudo New-Item -Path $FolderPath -ItemType Directory | Out-Null
                     }
                 }
@@ -558,7 +558,6 @@ function New-Folder {
         Write-host "Folder path [$($FolderPath)] already exist." -ForegroundColor Green
     }
 }
-
 function Get-LatestGitHubRelease {
     param (
         [string] $Programm,
@@ -676,8 +675,8 @@ Function Install-Powershell7 {
     #Powershell7
     $Release = Get-LatestGitHubRelease -Programm "PowerShell/PowerShell" -Stable
 
-    [uri] $global:Powershell764URI       = ($Release | Where-Object {$_.name -like "*win-x64.msi"}).assets.browser_download_url
-    [uri] $global:Powershell732URI       = ($Release | Where-Object {$_.name -like "*win-x64.msi"}).assets.browser_download_url
+    [uri] $global:Powershell764URI       = ($Release.assets | Where-Object {$_.name -like "*win-x64.msi"}).browser_download_url
+    [uri] $global:Powershell732URI       = ($Release.assets | Where-Object {$_.name -like "*win-x64.msi"}).browser_download_url
 
     write-host "3. Check powershell version."
     $PSVer = [int16] $PSVersionTable.PSVersion.major
