@@ -632,10 +632,13 @@ Function Install-Program {
             write-host "Prepare to install $Description [$(split-path -path $ProgramURI -Leaf)] size [$([math]::round($Program.size/ 1mb,2)) MB]."
             If ( $ProgramURI ) {
                 if ( test-path -path $Global:ProgramFileName ){
-                    Remove-Item -Path $Global:ProgramFileName
+                    #Remove-Item -Path $Global:ProgramFileName
+                }
+                Else {
+                    Invoke-WebRequest -Uri $ProgramURI -OutFile $Global:ProgramFileName
                 }
 
-                Invoke-WebRequest -Uri $ProgramURI -OutFile $Global:ProgramFileName
+                
                 if ( test-path -path $Global:ProgramFileName ){
                     Unblock-File -path $Global:ProgramFileName
 
