@@ -234,9 +234,8 @@ Function Set-FrameworkEnvironment {
     return $true
 }
 
-$MyFrameworkFunctions = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkBootstrapperURI  -ErrorAction SilentlyContinue
-
-Invoke-Expression $MyFrameworkFunctions  -ErrorAction SilentlyContinue
+[uri] $MyFrameworkFunctionsURI = "https://raw.githubusercontent.com/Alex-0293/MyFrameworkInstaller/master/SCRIPTS/Functions.ps1"
+$MyFrameworkFunctions = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkFunctionsURI  -ErrorAction SilentlyContinue
 
 clear-host
 Start-Transcript
