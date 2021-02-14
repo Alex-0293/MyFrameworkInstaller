@@ -762,7 +762,7 @@ Function Set-FrameworkEnvironment {
     [uri]    $Global:WMF5_2012R2_64 = "https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win8.1AndW2K12R2-KB3191564-x64.msu"
 
     $root = "$($Env:USERPROFILE)\Documents\MyProjects"
-    $FileCashFolderPath = "$Root\Install"
+    $Global:FileCashFolderPath = "$Root\Install"
     write-host "File cache folder [$FileCashFolderPath]."
     if ( test-path $FileCashFolderPath ){
         [psobject]$InstallConfig = Import-Clixml -path "$FileCashFolderPath\Config.xml"
@@ -802,7 +802,7 @@ Function Set-FrameworkEnvironment {
             New-Folder -FolderPath $Global:MyProjectFolderPath -Confirm
         }
 
-        $FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install"
+        $Global:FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install"
         New-Folder -FolderPath $FileCashFolderPath -Confirm
 
         [string] $Global:GitUserName         = Get-Answer -Title "Enter your git user name: " -Color "Cyan","DarkMagenta" -AddNewLine
