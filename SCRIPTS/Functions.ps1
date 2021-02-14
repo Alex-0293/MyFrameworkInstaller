@@ -357,7 +357,7 @@ Function Start-Programm {
         [string] $Programm,
         [string[]] $Arguments,
         [string] $Description,
-        [switch] $Evaluate
+        [switch] $Evaluate,
         [switch] $RunAs
     )
 
