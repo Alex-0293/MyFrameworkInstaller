@@ -694,16 +694,19 @@ Function Install-Powershell7 {
         }
     }
 
-    if (Get-Command -name "pwsh.exe" ){
+    $Powershell7Exist = Get-Command -name "pwsh.exe" -ErrorAction SilentlyContinue
+    if ( $Powershell7Exist ){
         $IsPS7Installed = $True
     }
     Else {
         $IsPS7Installed = $False
     }
+
     if ( !$IsPS7Installed ) {
         $Answer = Get-Answer -Title "Do you want to install powershell version 7? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
         if ( $Answer -eq "Y" ) {
             write-host "Install Powershell 7."
+            Get-Variable
             $Powershell7URI = (Get-Variable -name "Powershell7$($OSBit)URI").Value
             $Global:Powershell7FileName = "$FileCashFolderPath\$(split-path -path $Powershell7URI -Leaf)"
             If ( $Powershell7URI ) {
