@@ -654,6 +654,9 @@ Function Install-Program {
             }
         }
     }
+    Else {
+        $res = $true
+    }
 
     Return $res
 }
