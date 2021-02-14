@@ -235,7 +235,10 @@ Function Set-FrameworkEnvironment {
 }
 
 [uri] $MyFrameworkFunctionsURI = "https://raw.githubusercontent.com/Alex-0293/MyFrameworkInstaller/master/SCRIPTS/Functions.ps1"
-$MyFrameworkFunctions = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkFunctionsURI  -ErrorAction SilentlyContinue
+$FunctionFilePath = "$($Env:temp)\Functions.ps1"
+$MyFrameworkFunctions = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkFunctionsURI
+set-content -Path $FunctionFilePath  -Value $MyFrameworkFunctions.content -force
+. $FunctionFilePath
 
 clear-host
 Start-Transcript
