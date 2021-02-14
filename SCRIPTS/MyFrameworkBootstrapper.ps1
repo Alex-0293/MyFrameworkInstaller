@@ -592,13 +592,16 @@ Function Install-GIt {
 
     $InstallGit = $True
 
-    $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
-    if ( $Res ) {
-        write-host "    $($res.output)"
-        $GitInstalledVer = $res.output.split(" ")[2].split(".")
-        $Max = Compare-Version -ver1 $GitInstalledVer -ver2 $GitVer 
-        if ( $Max -le $GitInstalledVer ){
-            $InstallGit = $False
+    $GitExist = Get-Command -Name "Git" -ErrorAction SilentlyContinue
+    if ( $GitExist ){
+        $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
+        if ( $Res ) {
+            write-host "    $($res.output)"
+            $GitInstalledVer = $res.output.split(" ")[2].split(".")
+            $Max = Compare-Version -ver1 $GitInstalledVer -ver2 $GitVer 
+            if ( $Max -le $GitInstalledVer ){
+                $InstallGit = $False
+            }
         }
     }
 
@@ -777,7 +780,7 @@ Function Set-FrameworkEnvironment {
         Else {
             New-Folder -FolderPath $Global:MyProjectFolderPath      
         }
-        $FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install" 
+        $FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install"
         New-Folder -FolderPath $FileCashFolderPath  
 
         [string] $Global:GitUserName         = Get-Answer -Title "Enter your git user name: " -Color "Cyan","DarkMagenta" -AddNewLine
