@@ -234,16 +234,15 @@ Function Set-FrameworkEnvironment {
     return $true
 }
 
+clear-host
+Start-Transcript
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 [uri] $MyFrameworkFunctionsURI = "https://raw.githubusercontent.com/Alex-0293/MyFrameworkInstaller/master/SCRIPTS/Functions.ps1"
 $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 $MyFrameworkFunctions = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkFunctionsURI
 set-content -Path $FunctionFilePath  -Value $MyFrameworkFunctions.content -force
 . $FunctionFilePath
-
-clear-host
-Start-Transcript
-
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $Step0 = Set-FrameworkEnvironment
 if ( $step0 ){
