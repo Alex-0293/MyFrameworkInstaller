@@ -20,8 +20,6 @@
 
 #>
 ################################# Script start here #################################
-. Functions.ps1
-
 Function Install-GIt {
     #Git
     $Release = Get-LatestGitHubRelease -Programm "git-for-windows/git" -Stable
@@ -235,6 +233,10 @@ Function Set-FrameworkEnvironment {
     }
     return $true
 }
+
+$MyFrameworkFunctions = Invoke-WebRequest -UseBasicParsing $Global:MyFrameworkBootstrapperURI  -ErrorAction SilentlyContinue
+
+Invoke-Expression $MyFrameworkFunctions  -ErrorAction SilentlyContinue
 
 clear-host
 Start-Transcript
