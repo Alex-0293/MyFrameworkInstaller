@@ -518,18 +518,36 @@ function Add-ToStartUp {
 }
 function New-Folder {
     Param (
-        [string] $FolderPath
+        [string] $FolderPath,
+        [switch] $Confirm
     )
 
-    if ( !(test-path $FolderPath) ){
+    if ( !(test-path $FolderPath) -or $Confirm ){
         try {
-            New-Item -Path $FolderPath -ItemType Directory | Out-Null
+            if ( $Confirm ){
+                $Answer = Get-Answer -Title "Do you want to remove existed folder [$FolderPath]? " -Color "Cyan","DarkMagenta" -AddNewLine -ChooseFrom "y","n"
+                if ( $Answer -eq "Y"){
+                    Remove-Item -path $FolderPath -Force
+                    New-Item -Path $FolderPath -ItemType Directory | Out-Null
+                }
+            }
+            Else {
+               New-Item -Path $FolderPath -ItemType Directory | Out-Null
+            }
         }
         Catch {
             try {
-                gsudo New-Item -Path $FolderPath -ItemType Directory | Out-Null
+                if ( $Confirm ){
+                    if ( $Answer -eq "Y"){
+                        gsudo Remove-Item -path $FolderPath -Force
+                        gsudo New-Item -Path $FolderPath -ItemType Directory | Out-Null
+                    }
+                }
+                Else {
+                   gsudo New-Item -Path $FolderPath -ItemType Directory | Out-Null
+                }
             }
-            Catch {            
+            Catch {
                 Write-host "Folder path [$($FolderPath)] cannot be created! $_" -ForegroundColor Red
             }
         }
@@ -652,7 +670,6 @@ Function Set-MyFrameworkInstaller {
         return $false
     }
 }
-
 Function Install-Powershell7 {
     #Powershell7
     $Release = Get-LatestGitHubRelease -Programm "PowerShell/PowerShell" -Stable
@@ -739,11 +756,10 @@ Function Install-Powershell7 {
         return $true
     }
 }
-
 Function Set-FrameworkEnvironment {
     #WMF5.1
     [uri]    $Global:WMF5_2012R2_64 = "https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win8.1AndW2K12R2-KB3191564-x64.msu"
-    
+
     $root = "$($Env:USERPROFILE)\Documents\MyProjects"
     $FileCashFolderPath = "$Root\Install"
     write-host "File cache folder [$FileCashFolderPath]."
@@ -777,14 +793,16 @@ Function Set-FrameworkEnvironment {
             if (($Global:MyProjectFolderPath.Substring(($Global:MyProjectFolderPath.Length-1),1) -eq "\") -or ($Global:MyProjectFolderPath.Substring(($Global:MyProjectFolderPath.Length-1),1) -eq "/") ) {
                 $Global:MyProjectFolderPath = $Global:MyProjectFolderPath.Substring(0,($Global:MyProjectFolderPath.Length - 1))
             }
-            $Global:MyProjectFolderPath = $Global:MyProjectFolderPath + "\MyProjects" 
-            New-Folder -FolderPath $Global:MyProjectFolderPath    
+            $Global:MyProjectFolderPath = $Global:MyProjectFolderPath + "\MyProjects"
+            New-Folder -FolderPath $Global:MyProjectFolderPath -Confirm
+
         }
         Else {
-            New-Folder -FolderPath $Global:MyProjectFolderPath      
+            New-Folder -FolderPath $Global:MyProjectFolderPath -Confirm
         }
+
         $FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install"
-        New-Folder -FolderPath $FileCashFolderPath  
+        New-Folder -FolderPath $FileCashFolderPath -Confirm
 
         [string] $Global:GitUserName         = Get-Answer -Title "Enter your git user name: " -Color "Cyan","DarkMagenta" -AddNewLine
         [string] $Global:GitEmail            = Get-Answer -Title "Enter your git email: " -Color "Cyan","DarkMagenta" -AddNewLine
@@ -810,7 +828,7 @@ Function Set-FrameworkEnvironment {
         } 
 
         $Global:ProjectServicesFolderPath = "$($Global:MyProjectFolderPath)\ProjectServices"
-        New-Folder -FolderPath $ProjectServicesFolderPath
+        New-Folder -FolderPath $ProjectServicesFolderPath -Confirm
 
         $InstallConfig = [PSCustomObject]@{
             MyProjectFolderPath       = $MyProjectFolderPath
@@ -837,7 +855,7 @@ if ( $step0 ){
     $Step1 = Install-GIt
     if ( $step1 ){
         $Step2 = Set-MyFrameworkInstaller
-        if ( $step2 ){    
+        if ( $step2 ){
             $Step3 = Install-Powershell7
             if ( $step3 ) {
                 $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
@@ -848,7 +866,7 @@ if ( $step0 ){
 
                 & pwsh.exe $MyFrameworkInstallerPath -root `"$Global:MyProjectFolderPath`"
             }
-        }   
+        }
     }
 }
 
