@@ -241,7 +241,7 @@ Function Install-Font{
     write-host "4. Install font." -ForegroundColor "Blue"
     $Release = Get-LatestGitHubRelease -Program "microsoft/cascadia-code" -Stable
 
-    [uri] $global:FontURI       = ($Release.assets | Where-Object {$_.name -like "CascadiaCode*"}).browser_download_url
+    [uri] $global:FontURI     = ($Release.assets | Where-Object {$_.name -like "CascadiaCode*"}).browser_download_url
     [string] $Global:FileName = "$($Global:FileCashFolderPath)\$($Release.assets.name)"
 
     if ( test-path -path $Global:FileName ){
@@ -281,7 +281,7 @@ $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
 
 clear-host
-$ScriptVer = "Version 1.8"
+$ScriptVer = "Version 1.9"
 $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 
 $Logs = Get-ChildItem -path $root -filter "*.log" -ErrorAction SilentlyContinue
