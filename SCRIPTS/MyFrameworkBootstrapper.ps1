@@ -22,18 +22,21 @@
 ################################# Script start here #################################
 Function Install-GIt {
     #Git
-    $Release = Get-LatestGitHubRelease -Programm "git-for-windows/git" -Stable
+
+    #$Res = Install-Program -ProgramName "pwsh.exe" -Description "Powershell 7.x" -GitRepo "PowerShell/PowerShell" -FilePartX32 "*win-x32.msi" -FilePartX64 "*win-x64.msi" -OSBit $OSBit -Installer "msiexec" -InstallerArguments @('/i',"%FilePath%",'/qn','/promptrestart')
+
+    $Release = Get-LatestGitHubRelease -Program "git-for-windows/git" -Stable
 
     [uri] $global:Git64URI       = ($Release.assets | Where-Object {$_.name -like "*64-bit.exe"}).browser_download_url
     [uri] $global:Git32URI       = ($Release.assets | Where-Object {$_.name -like "*32-bit.exe"}).browser_download_url
-    [string] $Global:GitFileName = "$($Env:TEMP)\GitInstall.exe"
+    [string] $Global:GitFileName = "$($Global:FileCashFolderPath)\GitInstall.exe"
     $GitVer  = $Release.tag_name.replace("v","").split(".")
 
     $InstallGit = $True
 
     $GitExist = Get-Command -Name "Git" -ErrorAction SilentlyContinue
     if ( $GitExist ){
-        $res = Start-Programm -Programm "git" -Arguments '--version' -Description "    Check git version."
+        $res = Start-Program -Program "git" -Arguments '--version' -Description "    Check git version."
         if ( $Res ) {
             write-host "    $($res.output)"
             $GitInstalledVer = $res.output.split(" ")[2].split(".")
@@ -55,7 +58,7 @@ Function Install-GIt {
             Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
             if ( test-path -path $Global:GitFileName ){
                 Unblock-File -path $Global:GitFileName
-                $res = Start-Programm -Programm $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
+                $res = Start-Program -Program $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
                 if (!$res){
                     exit 1
                 }
@@ -79,7 +82,7 @@ Function Set-MyFrameworkInstaller {
     if ( test-path -path "$ProjectServicesFolderPath\MyFrameworkInstaller" ){
         remove-item -path "$ProjectServicesFolderPath\MyFrameworkInstaller" -Force -Recurse
     }
-    $res = Start-Programm -Programm "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
+    $res = Start-Program -Program "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
         
     if ( $res.object.exitcode -eq 0 ){
         Set-Location -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS"
@@ -93,7 +96,6 @@ Function Set-MyFrameworkInstaller {
     }
 }
 Function Install-Powershell7 {
-    . $PWD\Functions.ps1
     write-host "3. Check powershell version."
     $PSVer = [int16] $PSVersionTable.PSVersion.major
     write-host "    Powershel version [$PSVer]."
@@ -114,7 +116,7 @@ Function Install-Powershell7 {
                     Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
                     if ( test-path -path $Global:WMF5FileName ){
                         Unblock-File -path $Global:WMF5FileName
-                        $res = Start-Programm -Programm "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
+                        $res = Start-Program -Program "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
                     }
                     Else {
                         Write-Host "Error downloading file [$Global:WMF5FileName]!" -ForegroundColor Red
@@ -128,7 +130,7 @@ Function Install-Powershell7 {
         }
     }
 
-    $Res = Install-Program -ProgramName "pwsh.exe" -Description "Powershell 7.x" -GitRepo "PowerShell/PowerShell" -FilePartX32 "*win-x32.msi" -FilePartX64 "*win-x64.msi" -OSBit $OSBit -RunAs -Installer "msiexec" -InstallerArguments @('/i',$Global:Powershell7FileName,'/qn','/promptrestart')
+    $Res = Install-Program -ProgramName "pwsh.exe" -Description "Powershell 7.x" -GitRepo "PowerShell/PowerShell" -FilePartX32 "*win-x32.msi" -FilePartX64 "*win-x64.msi" -OSBit $OSBit -RunAs -Installer "msiexec" -InstallerArguments @('/i',"%FilePath%",'/qn','/promptrestart')
 
     if ( $Res ){
         if ( ( $Res.output -like "*Installation completed successfully*" ) -or ( $Res.output -like "*Configuration completed successfully*" ) -or ( $Res -eq $True ) ){
@@ -149,8 +151,8 @@ Function Set-FrameworkEnvironment {
     #WMF5.1
     [uri]    $Global:WMF5_2012R2_64 = "https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win8.1AndW2K12R2-KB3191564-x64.msu"
 
-    $root = "$($Env:USERPROFILE)\Documents\MyProjects"
-    $Global:FileCashFolderPath = "$Root\Install"
+    $LogDirectory = "$($Env:USERPROFILE)\Documents\MyProjects"
+    $Global:FileCashFolderPath = "$LogDirectory\Install"
     write-host "File cache folder [$FileCashFolderPath]."
     if ( test-path $FileCashFolderPath ){
         [psobject]$InstallConfig = Import-Clixml -path "$FileCashFolderPath\Config.xml"
@@ -190,8 +192,8 @@ Function Set-FrameworkEnvironment {
             New-Folder -FolderPath $Global:MyProjectFolderPath -Confirm
         }
 
-        $Global:FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install"
-        New-Folder -FolderPath $FileCashFolderPath -Confirm
+        # $Global:FileCashFolderPath = "$($Global:MyProjectFolderPath)\Install"
+        New-Folder -FolderPath $FileCashFolderPath -Force
 
         [string] $Global:GitUserName         = Get-Answer -Title "Enter your git user name: " -Color "Cyan","DarkMagenta" -AddNewLine
         [string] $Global:GitEmail            = Get-Answer -Title "Enter your git email: " -Color "Cyan","DarkMagenta" -AddNewLine
@@ -234,11 +236,17 @@ Function Set-FrameworkEnvironment {
     return $true
 }
 
-clear-host
-Start-Transcript
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
+
+clear-host
+$root = "$($Env:USERPROFILE)\Documents\MyProjects"
+Get-ChildItem -path $root -filter "*.log" | remove-item -force -ErrorAction SilentlyContinue
+
+$TransPath = "$root\MyFrameworkBootStrapper-$(Get-date -format 'dd.MM.yy HH-mm-ss').log"
+Start-Transcript -path $TransPath
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $Step0 = Set-FrameworkEnvironment
 if ( $step0 ){
@@ -249,8 +257,6 @@ if ( $step0 ){
             $Step3 = Install-Powershell7
             if ( $step3 ) {
                 $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
-                
-
                 Update-Environment
                 write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
                 Stop-Transcript

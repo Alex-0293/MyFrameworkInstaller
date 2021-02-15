@@ -23,7 +23,7 @@
 
 #>
 param(
-    [string] $root = "M:\SYNCTHING\MyProjects"
+    [string] $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 )
 ################################# Script start here #################################
     . "$root\ProjectServices\MyFrameworkInstaller\SCRIPTS\Functions.ps1"
@@ -33,18 +33,19 @@ param(
     Stop-Transcript -ErrorAction SilentlyContinue
 
     #$root = "$($Env:USERPROFILE)\Documents\MyProjects"
-    $FileCashFolderPath = "$Root\Install"
-    Start-Transcript -Path "$FileCashFolderPath\setup.log"
-    write-host "File cache folder [$FileCashFolderPath]."
+    
+    $TransPath = "$($Env:USERPROFILE)\Documents\MyFrameworkInstaller-$(Get-date -format 'dd.MM.yy HH-mm-ss').log"
+    Start-Transcript -Path $TransPath
+    
     if ( test-path $FileCashFolderPath ){
         [psobject]$InstallConfig = Import-Clixml -path "$FileCashFolderPath\Config.xml"
         foreach ( $item in $InstallConfig.PSObject.Properties ){
             Set-Variable -Name $item.Name -Value $item.Value -Scope global
         }
     }
+    write-host "File cache folder [$FileCashFolderPath]."
 
-
-    $SettingsPath = "$Root\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
+    $SettingsPath = "MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
     . $SettingsPath
 
     if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
@@ -74,7 +75,7 @@ param(
 
                 if ( test-path -path $Global:VSCodeFileName ){
                     Unblock-File -path $Global:VSCodeFileName
-                    $res = Start-Programm -Programm $Global:VSCodeFileName -Arguments @('/silent', '/MERGETASKS=!runcode') -Description "    Installing VSCode."
+                    $res = Start-Program -Program $Global:VSCodeFileName -Arguments @('/silent', '/MERGETASKS=!runcode') -Description "    Installing VSCode."
                     Update-Environment
                     # if ( $res.ErrorOutput ){
                     #     write-host $res.ErrorOutput -ForegroundColor Red
@@ -92,12 +93,12 @@ param(
         if ( $CodeCommand ) {
             write-host "4. Config VSCode."
 
-            $res = Start-Programm -Programm "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell extention."
+            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell extention."
             # if ( $res.ErrorOutput ){
             #     write-host $res.ErrorOutput -ForegroundColor Red
             # }
 
-            $res = Start-Programm -Programm "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack extention."
+            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack extention."
             # if ( $res.ErrorOutput ){
             #     write-host $res.ErrorOutput -ForegroundColor Red
             # }
@@ -141,7 +142,7 @@ param(
 
     if (-not (test-path "$ProjectsFolderPath\GlobalSettings")){
         Set-Location $ProjectsFolderPath
-        $res = Start-Programm -Programm "git" -Arguments @('clone', $Global:GlobalSettingsURL ) -Description "    Git clone [$Global:GlobalSettingsURL]."
+        $res = Start-Program -Program "git" -Arguments @('clone', $Global:GlobalSettingsURL ) -Description "    Git clone [$Global:GlobalSettingsURL]."
         if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
             Write-host "    Folder already exist." -ForegroundColor yellow
         }
@@ -168,7 +169,7 @@ param(
 
     if (-not (test-path "$ProjectServicesFolderPath\GitHubRepositoryClone")){
         Set-Location $ProjectServicesFolderPath
-        $res = Start-Programm -Programm "git" -Arguments @('clone', $Global:GitHubRepositoryCloneURL ) -Description "    Git clone [$Global:GitHubRepositoryCloneURL]."
+        $res = Start-Program -Program "git" -Arguments @('clone', $Global:GitHubRepositoryCloneURL ) -Description "    Git clone [$Global:GitHubRepositoryCloneURL]."
         if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
             Write-host "    Folder already exist." -ForegroundColor yellow
         }

@@ -352,9 +352,9 @@ Function Get-Answer {
     return $Res
 
 }
-Function Start-Programm {
+Function Start-Program {
     param (
-        [string] $Programm,
+        [string] $Program,
         [string[]] $Arguments,
         [string] $Description,
         [switch] $Evaluate,
@@ -362,10 +362,10 @@ Function Start-Programm {
     )
 
     $PSO = [PSCustomObject]@{
-        Programm    = $Programm
+        Programm    = $Program
         Arguments   = $null
         Description = $Description
-        Command     = get-command $Programm -ErrorAction SilentlyContinue
+        Command     = get-command $Program -ErrorAction SilentlyContinue
         Object      = $null
         Output      = $null
         ErrorOutput = $null
@@ -498,11 +498,11 @@ Function Start-Programm {
             }
         }
         else{
-            Write-host "Command [$Programm] not found!" -ForegroundColor red
+            Write-host "Command [$Program] not found!" -ForegroundColor red
         }
     }
     else{
-        Write-host "Command [$Programm] not found!" -ForegroundColor red
+        Write-host "Command [$Program] not found!" -ForegroundColor red
     }
 
     Return $PSO
@@ -615,7 +615,7 @@ Function Install-Program {
     if ( !$IsInstalled ) {
         $Answer = Get-Answer -Title "Do you want to install $Description" -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
         if ( $Answer -eq "Y" ) {
-            $Release = Get-LatestGitHubRelease -Programm $GitRepo -Stable
+            $Release = Get-LatestGitHubRelease -Program $GitRepo -Stable
             "PowerShell/PowerShell"
             switch ($OSBit) {
                 "32" {  
@@ -637,15 +637,19 @@ Function Install-Program {
                 Else {
                     Invoke-WebRequest -Uri $ProgramURI -OutFile $Global:ProgramFileName
                 }
-                
+
                 if ( test-path -path $Global:ProgramFileName ){
                     Unblock-File -path $Global:ProgramFileName
+                    $ReplacedInstallerArguments = @()
+                    foreach( $item in $InstallerArguments ){
+                        $ReplacedInstallerArguments += $item.replace("%FilePath%",$Global:ProgramFileName)
+                    }
 
                     if ( $RunAs ){
-                        $res = Start-Programm -Programm $Installer -Arguments $InstallerArguments -Description "    Installing $Description." -RunAs
+                        $res = Start-Program -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description." -RunAs
                     }
                     Else {
-                        $res = Start-Programm -Programm $Installer -Arguments $InstallerArguments -Description "    Installing $Description."
+                        $res = Start-Program -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description."
                     }
                 }
                 Else {
@@ -709,10 +713,10 @@ function Install-CustomModule {
         if ((test-path "$ModulePath")){
             Set-Location -path $ModulePath
             if ( $Evaluate ){
-                $res = Start-Programm -Programm "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]." -Evaluate
+                $res = Start-Program -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]." -Evaluate
             }
             Else {
-                $res = Start-Programm -Programm "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]."
+                $res = Start-Program -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]."
             }
             if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
                 Write-host "    Folder already exist." -ForegroundColor yellow
