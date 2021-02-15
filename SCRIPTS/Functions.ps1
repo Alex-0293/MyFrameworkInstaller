@@ -352,7 +352,7 @@ Function Get-Answer {
     return $Res
 
 }
-Function Start-ProgramNew {    
+Function Start-ProgramNew {
     param (
         [string] $Program,
         [string] $Command,
@@ -899,3 +899,5 @@ function Install-Fonts {
     }
 }
 
+$Ver = "2.0"
+write-host -object "Function version: $Ver"
