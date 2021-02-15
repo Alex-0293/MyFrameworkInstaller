@@ -130,7 +130,7 @@ Function Install-Powershell7 {
         }
     }
 
-    $Res = Install-Program -ProgramName "pwsh.exe" -Description "Powershell 7.x" -GitRepo "PowerShell/PowerShell" -FilePartX32 "*win-x32.msi" -FilePartX64 "*win-x64.msi" -OSBit $OSBit -RunAs -Installer "msiexec" -InstallerArguments @('/i',"%FilePath%",'/qn','/promptrestart')
+    $Res = Install-Program -ProgramName "pwsh.exe" -Description "Powershell 7.x" -GitRepo "PowerShell/PowerShell" -FilePartX32 "*win-x32.msi" -FilePartX64 "*win-x64.msi" -OSBit $OSBit -RunAs -Installer "msiexec" -InstallerArguments @('/i',"%FilePath%",'/qn','/promptrestart') -force
 
     if ( $Res ){
         if ( ( $Res.output -like "*Installation completed successfully*" ) -or ( $Res.output -like "*Configuration completed successfully*" ) -or ( $Res -eq $True ) ){

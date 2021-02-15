@@ -601,7 +601,8 @@ Function Install-Program {
         [string]   $OSBit,
         [switch]   $RunAs,
         [string]   $Installer,
-        [string[]] $InstallerArguments
+        [string[]] $InstallerArguments,
+        [switch]   $Force
     )
 
     $ProgramExist = Get-Command -name $ProgramName -ErrorAction SilentlyContinue
@@ -613,7 +614,13 @@ Function Install-Program {
     }
 
     if ( !$IsInstalled ) {
-        $Answer = Get-Answer -Title "Do you want to install $Description" -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
+        if ( $Force ){
+            $Answer = "Y"
+        }
+        Else {
+           $Answer = Get-Answer -Title "Do you want to install $Description" -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine 
+        }
+        
         if ( $Answer -eq "Y" ) {
             $Release = Get-LatestGitHubRelease -Program $GitRepo -Stable
             "PowerShell/PowerShell"

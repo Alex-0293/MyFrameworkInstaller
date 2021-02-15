@@ -26,26 +26,32 @@ param(
     [string] $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 )
 ################################# Script start here #################################
-    . "$root\ProjectServices\MyFrameworkInstaller\SCRIPTS\Functions.ps1"
+
+    $FunctionFilePath = "$($Env:temp)\Functions.ps1"
+    . $FunctionFilePath
 
     #remove it
     #$OSBit = 64
     Stop-Transcript -ErrorAction SilentlyContinue
 
     #$root = "$($Env:USERPROFILE)\Documents\MyProjects"
-    
-    $TransPath = "$($Env:USERPROFILE)\Documents\MyFrameworkInstaller-$(Get-date -format 'dd.MM.yy HH-mm-ss').log"
+
+    $TransPath = "$root\MyFrameworkInstaller-$(Get-date -format 'dd.MM.yy HH-mm-ss').log"
     Start-Transcript -Path $TransPath
-    
+
+    if (!$FileCashFolderPath ) {
+        $FileCashFolderPath = "$root\install"
+    }
     if ( test-path $FileCashFolderPath ){
         [psobject]$InstallConfig = Import-Clixml -path "$FileCashFolderPath\Config.xml"
         foreach ( $item in $InstallConfig.PSObject.Properties ){
             Set-Variable -Name $item.Name -Value $item.Value -Scope global
         }
+        write-host "Use cache file ["$FileCashFolderPath\Config.xml"]." -ForegroundColor "Green"
     }
-    write-host "File cache folder [$FileCashFolderPath]."
+    
 
-    $SettingsPath = "MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
+    $SettingsPath = "$MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
     . $SettingsPath
 
     if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
@@ -242,4 +248,4 @@ param(
 
     read-host -Prompt "Press enter key..."
     remove-item -path $FileCashFolderPath -Recurse -Force
-    ################################# Script end here ###################################
+################################# Script end here ###################################
