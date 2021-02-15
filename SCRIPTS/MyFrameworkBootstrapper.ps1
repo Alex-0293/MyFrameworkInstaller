@@ -244,7 +244,7 @@ Function Install-Font{
     [uri] $global:FontURI       = ($Release.assets | Where-Object {$_.name -like "CascadiaCode*"}).browser_download_url
     [string] $Global:FileName = "$($Global:FileCashFolderPath)\$($Release.assets.name)"
 
-    if ( test-path -path $Global:GitFileName ){
+    if ( test-path -path $Global:FileName ){
         # Remove-Item -Path $Global:GitFileName
     }
     Else {
@@ -268,7 +268,7 @@ Function Install-Font{
         return $true
     }
     Else {
-        Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
+        Write-Host "Error downloading file [$Global:FileName]!" -ForegroundColor Red
         return $false
     }
 
