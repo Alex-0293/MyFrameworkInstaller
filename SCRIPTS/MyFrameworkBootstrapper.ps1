@@ -248,7 +248,7 @@ Function Install-Font{
         # Remove-Item -Path $Global:GitFileName
     }
     Else {
-       Invoke-WebRequest -Uri $FontURI -OutFile $Global:FileName 
+       Invoke-WebRequest -Uri $FontURI -OutFile $Global:FileName
     }
 
     
