@@ -242,7 +242,7 @@ $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
 
 clear-host
-$ScriptVer = "Version 1.7"
+$ScriptVer = "Version 1.8"
 Write-host -object $ScriptVer -ForegroundColor "Cyan"
 $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 
