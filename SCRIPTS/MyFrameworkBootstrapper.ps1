@@ -160,6 +160,8 @@ Function Set-FrameworkEnvironment {
         foreach ( $item in $InstallConfig.PSObject.Properties ){
             Set-Variable -Name $item.Name -Value $item.Value -Scope global
         }
+        New-Folder -FolderPath $FileCashFolderPath
+        New-Folder -FolderPath $ProjectServicesFolderPath
     }
     Else {
         $Data = @()
