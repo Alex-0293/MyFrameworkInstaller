@@ -871,7 +871,7 @@ function Install-Fonts {
     )
     try {
         $FontFileName = split-path -path $FontFile  -Leaf
-        $FontFileNameWithoutExt = split-path -path $FontFileName  -LeafBase
+        $FontFileNameWithoutExt = $FontFileName.Split(".")[1]
         If (!(Test-Path "c:\windows\fonts\$FontFileName")) {
             $Extention = split-path -path $fontFile -extension
             switch ( $Extention ) {
