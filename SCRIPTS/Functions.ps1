@@ -352,18 +352,92 @@ Function Get-Answer {
     return $Res
 
 }
-Function Start-Program {
+Function Start-ProgramNew {    
     param (
         [string] $Program,
+        [string] $Command,
         [string[]] $Arguments,
         [string] $Description,
+        [string] $WorkDir,
         [switch] $Evaluate,
         [switch] $RunAs
+
     )
+
+    Function Start-ProgramProcess {
+    <#
+        .SYNOPSIS
+            Start program
+        .DESCRIPTION
+            Function to start os executable file.
+        .EXAMPLE
+            Start-ProgramNew -LogFilePath $LogFilePath [-Program $Program] [-Arguments $Arguments] [-Credentials $Credentials] [-WorkDir $WorkDir] [-Evaluate $Evaluate] [-DebugRun $DebugRun] [-Wait $Wait]
+        .NOTES
+            AUTHOR  Alexk
+            CREATED 05.11.20
+            VER     1
+    #>
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory = $false, Position = 0, HelpMessage = "Program path to execute." )]
+            [ValidateNotNullOrEmpty()]
+            [string]    $Program,
+            [Parameter(Mandatory = $false, Position = 1, HelpMessage = "Arguments." )]
+            [string]    $Arguments,
+            [Parameter(Mandatory = $false, Position = 3, HelpMessage = "Working directory." )]
+            [string]    $WorkDir,
+            [Parameter(Mandatory = $false, Position = 4, HelpMessage = "Use elevated rights." )]
+            [switch]    $Evaluate,
+            [Parameter(Mandatory = $false, Position = 5, HelpMessage = "Debug run." )]
+            [switch]    $DebugRun,
+            [Parameter(Mandatory = $false, Position = 6, HelpMessage = "Wait for result." )]
+            [switch]    $Wait
+        )
+    
+        $ProcessInfo                        = New-Object -TypeName System.Diagnostics.ProcessStartInfo
+        $ProcessInfo.FileName               = $Program
+        $ProcessInfo.UseShellExecute        = $false
+        $ProcessInfo.RedirectStandardError  = $true
+        $ProcessInfo.RedirectStandardOutput = $true
+        $ProcessInfo.CreateNoWindow         = $true
+    
+        $Message               = "User [$([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)]. Starting program [$Program]"
+    
+        if ($DebugRun){
+            $Message                += ", with debug"
+        }
+        if ($Evaluate) {
+            $Message               += ", with evaluate"
+            $ProcessInfo.Verb       = "RunAs"
+        }
+        if ($WorkDir) {
+            $Message               += ", use work directory [$WorkDir]"
+            $ProcessInfo.WorkingDirectory = "$WorkDir"
+        }
+        if ($Arguments){
+            $Message               += ", use arguments [$Arguments]"
+            $ProcessInfo.Arguments = "$Arguments"
+        }
+    
+        #Write-host "$Message."
+        if ($Wait){
+            $Process           = New-Object System.Diagnostics.Process
+            $Process.StartInfo = $ProcessInfo
+            $Process.Start() | Out-Null
+            $Process.WaitForExit()
+        }
+        Else {
+            $Process           = New-Object System.Diagnostics.Process
+            $Process.StartInfo = $ProcessInfo
+            $Process.Start() | Out-Null
+        }
+        
+        Return $Process
+    }
 
     $PSO = [PSCustomObject]@{
         Programm    = $Program
-        Arguments   = $null
+        Arguments   = $Arguments
         Description = $Description
         Command     = get-command $Program -ErrorAction SilentlyContinue
         Object      = $null
@@ -376,130 +450,183 @@ Function Start-Program {
     }
 
     if ( $PSO.Command ) {
-        if ( $PSO.Command.path ) {
-            $ProgPath    = $PSO.Command.path
-            $Output      = "$($Env:temp)\Output.txt"
-            $ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
-
-            switch ( $PSO.Command.name ) {
-                "msiexec.exe" {
-                    $MSIInstallerLogFilePath = "$($Env:TEMP)\msi.log"
-                    $AddLog = $true
-                    foreach ( $item in $Arguments ){
-                        if ( $item.trim() -like "/LIME*"){
-                            $AddLog = $False
-                        }
-                    }
-                    if ( $AddLog ){
-                        $Arguments += "/LIME `"$($MSIInstallerLogFilePath)`""
-                    }
-                }
-                "wusa.exe" {
-                    $WUSALogFilePath = "$($Env:TEMP)\wusa.etl"
-                    $AddLog = $true
-                    foreach ( $item in $Arguments ){
-                        if ( $item.trim() -like "/log:*"){
-                            $AddLog = $False
-                        }
-                    }
-                    if ( $AddLog ){
-                        $Arguments += "/log:`"$($WUSALogFilePath)`""
-                    }
-                }
-                Default {}
+        switch ( $PSO.Command.CommandType ) {
+            "Cmdlet" {
             }
-
-            $PSO.Arguments = $Arguments
-
-            if ( $Evaluate ){
-                $Res      = gsudo "Start-Process '$ProgPath' -Wait -PassThru -ArgumentList '$Arguments' -RedirectStandardOutput '$Output' -RedirectStandardError '$ErrorOutput'"
-            }
-            else {
-                if ( $RunAs ) {
-                    $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -Verb RunAs
+            "Application" {
+                if ( $PSO.Command.path ) { 
+                    $ProgPath = $PSO.Command.path
                 }
                 Else {
-                    $Res      = Start-Process "`"$ProgPath`"" -Wait -PassThru -ArgumentList $Arguments -RedirectStandardOutput $Output -RedirectStandardError $ErrorOutput
+                    Write-host "Command [$Program] not found!" -ForegroundColor red
+                    exit 1
                 }
             }
+            Default  {
+                
+            }
+        }
 
+        #$Output      = "$($Env:temp)\Output.txt"
+        #$ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
 
-            if ($Res.HasExited -or $Evaluate -or $RunAs ) {
+        switch ( $PSO.Command.name ) {
+            "msiexec.exe" {
+                $MSIInstallerLogFilePath = "$($Env:TEMP)\msi.log"
+                $AddLog = $true
+                foreach ( $item in $Arguments ){
+                    if ( $item.trim() -like "/LIME*"){
+                        $AddLog = $False
+                    }
+                }
+                if ( $AddLog ){
+                    $Arguments += "/LIME `"$($MSIInstallerLogFilePath)`""
+                }
+            }
+            "wusa.exe" {
+                $WUSALogFilePath = "$($Env:TEMP)\wusa.etl"
+                $AddLog = $true
+                foreach ( $item in $Arguments ){
+                    if ( $item.trim() -like "/log:*"){
+                        $AddLog = $False
+                    }
+                }
+                if ( $AddLog ){
+                    $Arguments += "/log:`"$($WUSALogFilePath)`""
+                }
+            }
+            Default {}
+        }
 
-                if ( !$Evaluate ) {
-                    $PSO.Object = $res
-                    $PSO.output = Get-Content -path $Output -ErrorAction SilentlyContinue
-                    Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
-                    $PSO.ErrorOutput = Get-Content -path $ErrorOutput -ErrorAction SilentlyContinue
-                    Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
+        #$PSO.Arguments = $Arguments
+        if ( $Evaluate ){
+            $Res      = gsudo "Start-Process '$ProgPath' -Wait -PassThru -ArgumentList '$Arguments' -RedirectStandardOutput '$Output' -RedirectStandardError '$ErrorOutput'"
+        }
+        else { 
+            switch ( $PSO.Command.CommandType ) {
+                "Cmdlet" {                    
+                }
 
-                    switch ( $PSO.Command.name ) {
-                        "msiexec.exe" {
-                            $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
-                            Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue
-                        }
-                        "wusa.exe" {
-                            $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
-                            Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
-                            $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
-                            Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
-                        }
-                        Default {
+                "Application" {
+                    $Params  = @{Program     = $PSO.Command.Source}
+                    $Params += @{Arguments   = $Arguments -join " "}
+                    $Params += @{Wait        = $true}
+                    if ( $WorkDir ){
+                        $Params += @{ WorkDir = $WorkDir }
+                    }
+  
+                    if ( $RunAs ) {
+                        $Params += @{ Evaluate = $true }
+                    }
+                    Else {
+                        $Params += @{ Evaluate = $false }
+                    }                
 
-                        }
+                    $Res = Start-ProgramProcess @Params
+                }
+                Default {
+                    $Command = $Command.Replace("`"","`"`"`"")
+
+                    $PowershellArguments = ""
+                    $PowershellArguments += " -NonInteractive -NoLogo"
+                    $PowershellArguments += " -ExecutionPolicy Bypass –NoProfile -Command `"& {$Command}`""
+
+                    $Powershell = "Powershell.exe"
+                
+                    $Params = @{
+                        Program        = $Powershell
+                        Arguments      = $PowershellArguments
+                        Wait           = $true                        
                     }
 
-                    switch ( $Res.ExitCode ) {
-                        0 {
-                            Write-host "    Successfully finished." -ForegroundColor green
-                        }
-                        Default {
-                            if ( $PSO.ErrorOutput ) {
-                                write-host "Error output:"       -ForegroundColor DarkRed
-                                write-host "============="       -ForegroundColor DarkRed
-                                write-host "$($PSO.ErrorOutput)" -ForegroundColor red
-                            }
-
-                            write-host ""
-
-                            if ( $PSO.Output ) {
-                                write-host "Std output:"    -ForegroundColor DarkRed
-                                write-host "============="  -ForegroundColor DarkRed
-                                write-host "$($PSO.Output)" -ForegroundColor red
-                            }
-                        }
+                    if ( $WorkDir ){
+                        $Params += @{ WorkDir = $WorkDir }  
                     }
-                } Else {
-                    $PSO.Object = ""
-                    $PSO.output = Get-Content -path $Output -ErrorAction SilentlyContinue
-                    Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
-                    $PSO.ErrorOutput = Get-Content -path $ErrorOutput -ErrorAction SilentlyContinue
-                    Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
 
-                    switch ( $PSO.Command.name ) {
-                        "msiexec.exe" {
-                            $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
-                            Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue
-                        }
-                        "wusa.exe" {
-                            $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
-                            Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
-                            $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
-                            Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
-                        }
-                        Default {
+                    if ( $RunAs ) {
+                        $Params += @{ Evaluate = $true }                    
+                    } 
+                    
+                    $Res = Start-ProgramProcess @Params
+                }
+            }
+        }
 
+
+        if ($Res.HasExited -or $Evaluate -or $RunAs ) {
+
+            if ( !$Evaluate ) {
+                $PSO.Object = $res
+                $PSO.output = $res.StandardOutput.ReadToEnd() 
+                #Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
+                $PSO.ErrorOutput = $res.StandardError.ReadToEnd() 
+                #Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
+
+                switch ( $PSO.Command.name ) {
+                    "msiexec.exe" {
+                        $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
+                        Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue
+                    }
+                    "wusa.exe" {
+                        $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
+                        $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
+                    }
+                    Default {
+
+                    }
+                }
+
+                switch ( $Res.ExitCode ) {
+                    0 {
+                        Write-host "    Successfully finished." -ForegroundColor green
+                    }
+                    Default {
+                        if ( $PSO.ErrorOutput ) {
+                            write-host "Error output:"       -ForegroundColor DarkRed
+                            write-host "============="       -ForegroundColor DarkRed
+                            write-host "$($PSO.ErrorOutput)" -ForegroundColor red
+                        }
+
+                        write-host ""
+
+                        if ( $PSO.Output ) {
+                            write-host "Std output:"    -ForegroundColor DarkRed
+                            write-host "============="  -ForegroundColor DarkRed
+                            write-host "$($PSO.Output)" -ForegroundColor red
                         }
                     }
                 }
-            }
-            Else {
-                Write-host "Error occured!" -ForegroundColor red
+            } Else {
+                $PSO.Object = ""
+                $PSO.output = Get-Content -path $Output -ErrorAction SilentlyContinue
+                Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
+                $PSO.ErrorOutput = Get-Content -path $ErrorOutput -ErrorAction SilentlyContinue
+                Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
+
+                switch ( $PSO.Command.name ) {
+                    "msiexec.exe" {
+                        $PSO.output += Get-Content -path $MSIInstallerLogFilePath -ErrorAction SilentlyContinue
+                        Remove-Item -path $MSIInstallerLogFilePath -Force -ErrorAction SilentlyContinue
+                    }
+                    "wusa.exe" {
+                        $PSO.output += (Get-WinEvent -Path $WUSALogFilePath -oldest | out-string)
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
+                        $WUSALogFilePath = "$($WUSALogFilePath.Split(".")[0]).dpx"
+                        Remove-Item -path $WUSALogFilePath -Force -ErrorAction SilentlyContinue
+                    }
+                    Default {
+
+                    }
+                }
             }
         }
-        else{
-            Write-host "Command [$Program] not found!" -ForegroundColor red
+        Else {
+            Write-host "Error occured!" -ForegroundColor red
         }
+       
+        
     }
     else{
         Write-host "Command [$Program] not found!" -ForegroundColor red
@@ -653,10 +780,10 @@ Function Install-Program {
                     }
 
                     if ( $RunAs ){
-                        $res = Start-Program -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description." -RunAs
+                        $res = Start-ProgramNew -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description." -RunAs
                     }
                     Else {
-                        $res = Start-Program -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description."
+                        $res = Start-ProgramNew -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description."
                     }
                 }
                 Else {
@@ -720,10 +847,10 @@ function Install-CustomModule {
         if ((test-path "$ModulePath")){
             Set-Location -path $ModulePath
             if ( $Evaluate ){
-                $res = Start-Program -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]." -Evaluate
+                $res = Start-ProgramNew -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]." -Evaluate
             }
             Else {
-                $res = Start-Program -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]."
+                $res = Start-ProgramNew -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]."
             }
             if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
                 Write-host "    Folder already exist." -ForegroundColor yellow
@@ -737,3 +864,38 @@ function Install-CustomModule {
         Write-Host "Module [$name] on [$modulePath] already exist!" -ForegroundColor green
     }
 }
+function Install-Fonts {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$FontFile
+    )
+    try {
+        $FontFileName = split-path -path $FontFile  -Leaf
+        $FontFileNameWithoutExt = split-path -path $FontFileName  -LeafBase
+        If (!(Test-Path "c:\windows\fonts\$FontFileName")) {
+            $Extention = split-path -path $fontFile -extension
+            switch ( $Extention ) {
+                ".TTF" {
+                    $FontName = "$FontFileNameWithoutExt (TrueType)"
+                }
+                ".OTF" {
+                    $FontName = "$FontFileNameWithoutExt (OpenType)"
+                }
+            }
+            
+
+            $res = Start-ProgramNew -Program "Copy-Item" -Command "Copy-Item -Path `"$FontFile`" -Destination `"C:\Windows\Fonts\$FontFileName`" -Force" -RunAs
+            
+            $res1 = Start-ProgramNew -Program "New-ItemProperty" -Command "New-ItemProperty -Name `"$FontName`" -Path `"HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts`" -PropertyType string -Value `"$FontFileName`"" -RunAs
+
+            if ( $res -and $res1 ){
+                return $true
+            }
+        }
+    }
+    catch {
+        write-warning $_.exception.message
+        return $false
+    }
+}
+

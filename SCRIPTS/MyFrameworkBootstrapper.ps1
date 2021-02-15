@@ -37,7 +37,7 @@ Function Install-GIt {
 
     $GitExist = Get-Command -Name "Git" -ErrorAction SilentlyContinue
     if ( $GitExist ){
-        $res = Start-Program -Program "git" -Arguments '--version' -Description "    Check git version."
+        $res = Start-ProgramNew -Program "git" -Arguments '--version' -Description "    Check git version."
         if ( $Res ) {
             write-host "    $($res.output)"
             $GitInstalledVer = $res.output.split(" ")[2].split(".")
@@ -59,7 +59,7 @@ Function Install-GIt {
             Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
             if ( test-path -path $Global:GitFileName ){
                 Unblock-File -path $Global:GitFileName
-                $res = Start-Program -Program $Global:GitFileName -Arguments '/silent' -Description "    Installing Git." -RunAs
+                $res = Start-ProgramNew -Program $Global:GitFileName -Arguments '/silent' -Description "    Installing Git." -RunAs
                 if (!$res){
                     exit 1
                 }
@@ -79,16 +79,15 @@ Function Set-MyFrameworkInstaller {
 
     write-host "2. Clone my framework installer" -ForegroundColor "Blue"
 
-    Set-Location -Path $ProjectServicesFolderPath
     if ( test-path -path "$ProjectServicesFolderPath\MyFrameworkInstaller" ){
         remove-item -path "$ProjectServicesFolderPath\MyFrameworkInstaller" -Force -Recurse
     }
-    $res = Start-Program -Program "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]."
+    $res = Start-ProgramNew -Program "git" -Arguments 'clone',$Global:MyFrameworkInstaller -Description "    Cloning [$Global:MyFrameworkInstaller]." -WorkDir $ProjectServicesFolderPath
         
     if ( $res.object.exitcode -eq 0 ){
         Set-Location -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS"
         Copy-Item -Path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" -Destination "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings.ps1"
-        Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" 
+        #Remove-Item -path "$ProjectServicesFolderPath\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1" 
         return $true  
     }
     else {
@@ -117,7 +116,7 @@ Function Install-Powershell7 {
                     Invoke-WebRequest -Uri $WMF5 -OutFile $Global:WMF5FileName
                     if ( test-path -path $Global:WMF5FileName ){
                         Unblock-File -path $Global:WMF5FileName
-                        $res = Start-Program -Program "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
+                        $res = Start-ProgramNew -Program "wusa.exe" -Arguments @($Global:WMF5FileName,'/quiet') -Description "    Installing WMF 5.1."
                     }
                     Else {
                         Write-Host "Error downloading file [$Global:WMF5FileName]!" -ForegroundColor Red
@@ -238,7 +237,45 @@ Function Set-FrameworkEnvironment {
     }
     return $true
 }
+Function Install-Font{
+    write-host "4. Install font." -ForegroundColor "Blue"
+    $Release = Get-LatestGitHubRelease -Program "microsoft/cascadia-code" -Stable
 
+    [uri] $global:FontURI       = ($Release.assets | Where-Object {$_.name -like "CascadiaCode*"}).browser_download_url
+    [string] $Global:FileName = "$($Global:FileCashFolderPath)\$($Release.assets.name)"
+
+    if ( test-path -path $Global:GitFileName ){
+        # Remove-Item -Path $Global:GitFileName
+    }
+    Else {
+       Invoke-WebRequest -Uri $FontURI -OutFile $Global:FileName 
+    }
+
+    
+    if ( test-path -path $Global:FileName ){
+        Unblock-File -path $Global:FileName
+        $FontArchivePath = $Global:FileName.replace(".zip","")
+        if ( test-path -path $FontArchivePath ){
+            Remove-Item -Path $FontArchivePath -recurse -Force
+        }
+        Expand-Archive -path $Global:FileName -DestinationPath $FontArchivePath
+        $Res = Install-Fonts -FontFile "$FontArchivePath\TTF\CascadiaCodePL.ttf"
+        #$res = Start-ProgramNew -Program $Global:FileName -Arguments '/silent' -Description "    Installing Font Cascadia Code PL." -RunAs
+        if (!$res){
+            exit 1
+        }
+        Update-Environment
+        return $true
+    }
+    Else {
+        Write-Host "Error downloading file [$Global:GitFileName]!" -ForegroundColor Red
+        return $false
+    }
+
+    
+
+    
+}
 
 $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
@@ -266,11 +303,13 @@ if ( $step0 ){
         if ( $step2 ){
             $Step3 = Install-Powershell7
             if ( $step3 ) {
-                $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
-                Update-Environment
-                write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
-                Stop-Transcript
-                & pwsh.exe $MyFrameworkInstallerPath -root "$($Env:USERPROFILE)\Documents\MyProjects"
+                $step4 = Install-Font
+                if ( $step4 ) {
+                    $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
+                    write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
+                    Stop-Transcript
+                    & pwsh.exe $MyFrameworkInstallerPath -root "$($Env:USERPROFILE)\Documents\MyProjects"
+                }
             }
         }
     }

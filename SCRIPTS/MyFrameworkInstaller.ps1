@@ -26,11 +26,7 @@ param(
     [string] $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 )
 ################################# Script start here #################################
-    $ScriptVer = "Version 1.8"
-    Write-host -object $ScriptVer -ForegroundColor "Cyan"
-    $FunctionFilePath = "$($Env:temp)\Functions.ps1"
-    . $FunctionFilePath
-
+    
     #remove it
     #$OSBit = 64
     #Stop-Transcript -ErrorAction SilentlyContinue
@@ -39,6 +35,10 @@ param(
 
     $TransPath = "$root\MyFrameworkInstaller-$(Get-date -format 'dd.MM.yy HH-mm-ss').log"
     Start-Transcript -Path $TransPath
+    $ScriptVer = "Version 1.8"    
+    $FunctionFilePath = "$($Env:temp)\Functions.ps1"
+    . $FunctionFilePath
+    Write-host -object $ScriptVer -ForegroundColor "Cyan"
 
     if (!$FileCashFolderPath ) {
         $FileCashFolderPath = "$root\install"
@@ -51,7 +51,10 @@ param(
         write-host "Use cache file ["$FileCashFolderPath\Config.xml"]." -ForegroundColor "Green"
     }
 
-    $SettingsPath = "$MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
+
+    $SettingsPath      = "$MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
+    $EmptySettingsPath = "$MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"
+    Copy-Item -Path $EmptySettingsPath -Destination $SettingsPath
     . $SettingsPath
 
     if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
@@ -81,7 +84,7 @@ param(
 
                 if ( test-path -path $Global:VSCodeFileName ){
                     Unblock-File -path $Global:VSCodeFileName
-                    $res = Start-Program -Program $Global:VSCodeFileName -Arguments @('/silent', '/MERGETASKS=!runcode') -Description "    Installing VSCode."
+                    $res = Start-ProgramNew -Program $Global:VSCodeFileName -Arguments @('/silent', '/MERGETASKS=!runcode') -Description "    Installing VSCode."
                     Update-Environment
                     # if ( $res.ErrorOutput ){
                     #     write-host $res.ErrorOutput -ForegroundColor Red
@@ -100,17 +103,17 @@ param(
         if ( $CodeCommand ) {
             write-host "4. Config VSCode."
 
-            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'shan.code-settings-sync') -Description "    Installing VSCode settings sync [shan.code-settings-sync] extention."
+            $res = Start-ProgramNew -Program "code" -Arguments @('--install-extension', 'shan.code-settings-sync') -Description "    Installing VSCode settings sync [shan.code-settings-sync] extention."
             # if ( $res.ErrorOutput ){
             #     write-host $res.ErrorOutput -ForegroundColor Red
             # }
 
-            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell [ms-vscode.powershell] extention."
+            $res = Start-ProgramNew -Program "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell [ms-vscode.powershell] extention."
             # if ( $res.ErrorOutput ){
             #     write-host $res.ErrorOutput -ForegroundColor Red
             # }
 
-            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack [pkief.material-icon-theme] extention."
+            $res = Start-ProgramNew -Program "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack [pkief.material-icon-theme] extention."
             # if ( $res.ErrorOutput ){
             #     write-host $res.ErrorOutput -ForegroundColor Red
             # }
@@ -154,7 +157,7 @@ param(
 
     if (-not (test-path "$ProjectsFolderPath\GlobalSettings")){
         Set-Location $ProjectsFolderPath
-        $res = Start-Program -Program "git" -Arguments @('clone', $Global:GlobalSettingsURL ) -Description "    Git clone [$Global:GlobalSettingsURL]."
+        $res = Start-ProgramNew -Program "git" -Arguments @('clone', $Global:GlobalSettingsURL ) -Description "    Git clone [$Global:GlobalSettingsURL]."
         if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
             Write-host "    Folder already exist." -ForegroundColor yellow
         }
@@ -181,7 +184,7 @@ param(
 
     if (-not (test-path "$ProjectServicesFolderPath\GitHubRepositoryClone")){
         Set-Location $ProjectServicesFolderPath
-        $res = Start-Program -Program "git" -Arguments @('clone', $Global:GitHubRepositoryCloneURL ) -Description "    Git clone [$Global:GitHubRepositoryCloneURL]."
+        $res = Start-ProgramNew -Program "git" -Arguments @('clone', $Global:GitHubRepositoryCloneURL ) -Description "    Git clone [$Global:GitHubRepositoryCloneURL]."
         if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
             Write-host "    Folder already exist." -ForegroundColor yellow
         }
@@ -237,17 +240,39 @@ param(
     }
 
     Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
+    
+    #$res = Start-ProgramNew -Program "Install-Module" -Command "Install-Module -Name `"posh-git`" -Scope `"AllUsers`""" -RunAs
+    #$res = Start-ProgramNew -Program "Install-Module" -Command "Install-Module -Name `"oh-my-posh`" -Scope `"AllUsers`"" -RunAs
+    $res = Start-ProgramNew -Program "Install-Module" -Command "Install-Module -Name `"PSReadLine`" -Scope `"AllUsers`" -Force -SkipPublisherCheck" -RunAs
+
+    Install-Module "posh-git" -Scope CurrentUser
+    Install-Module "oh-my-posh" -Scope CurrentUser
+    Update-Environment
+    
+    Import-Module posh-git
+    Import-Module oh-my-posh
+    
+    set-theme "Paradox"
+
+    $NewProfile = @"
+    Import-Module posh-git
+    Import-Module oh-my-posh
+    Set-Theme Paradox
+"@
+
+    $NewProfile | Set-Content -path $profile
 
     if ( $StartVSCode ){
         Set-Location -Path $Global:MyProjectFolderPath
         & code "`"$($Global:MyProjectFolderPath)`""
+        pause
         $VSCodeConfig = Get-Content -path $Global:VSCodeConfigFilePath
         
-        $VSCodeConfig = $VSCodeConfig | ConvertFrom-Json
-        $VSCodeConfig.sync.autoDownload  = $false
-        $VSCodeConfig.sync.forceDownload = $false
+        $VSCodeSettings = $VSCodeConfig | ConvertFrom-Json
+        $VSCodeSettings."sync.autoDownload"  = $false
+        $VSCodeSettings."sync.forceDownload" = $false
         
-        $VSCodeConfig = $VSCodeConfig | ConvertTo-Json
+        $VSCodeConfig = $VSCodeSettings | ConvertTo-Json
         $VSCodeConfig | Set-Content -Path $Global:VSCodeConfigFilePath    }
 
     Remove-FromStartUp -ShortCutName "MyFrameworkInstaller"
