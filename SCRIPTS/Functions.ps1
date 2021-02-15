@@ -508,7 +508,7 @@ Function Start-Program {
     Return $PSO
 }
 function Update-Environment {
-    write-host "Refresh environment..." -ForegroundColor Yellow
+    write-host "    Updating environment..." -ForegroundColor Yellow
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 }
 function Add-ToStartUp {

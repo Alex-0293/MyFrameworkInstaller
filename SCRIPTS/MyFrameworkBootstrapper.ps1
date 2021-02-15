@@ -58,7 +58,7 @@ Function Install-GIt {
             Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
             if ( test-path -path $Global:GitFileName ){
                 Unblock-File -path $Global:GitFileName
-                $res = Start-Program -Program $Global:GitFileName -Arguments '/silent' -Description "    Installing Git."
+                $res = Start-Program -Program $Global:GitFileName -Arguments '/silent' -Description "    Installing Git." -RunAs
                 if (!$res){
                     exit 1
                 }
@@ -235,15 +235,20 @@ Function Set-FrameworkEnvironment {
     }
     return $true
 }
-$ScriptVer = "Version 1.7"
-Write-host -object $ScriptVer -ForegroundColor "Cyan"
+
 
 $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
 
 clear-host
+$ScriptVer = "Version 1.8"
+Write-host -object $ScriptVer -ForegroundColor "Cyan"
 $root = "$($Env:USERPROFILE)\Documents\MyProjects"
-Get-ChildItem -path $root -filter "*.log" | remove-item -force -ErrorAction SilentlyContinue
+
+$Logs = Get-ChildItem -path $root -filter "*.log" -ErrorAction SilentlyContinue
+if ( $logs ){
+    $logs | remove-item -force -ErrorAction SilentlyContinue
+}
 
 $TransPath = "$root\MyFrameworkBootStrapper-$(Get-date -format 'dd.MM.yy HH-mm-ss').log"
 Start-Transcript -path $TransPath
