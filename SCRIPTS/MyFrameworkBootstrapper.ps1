@@ -52,7 +52,7 @@ Function Install-GIt {
         $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
         If ( $GitURI ) {
             if ( test-path -path $Global:GitFileName ){
-                Remove-Item -Path $Global:GitFileName
+               # Remove-Item -Path $Global:GitFileName
             }
 
             Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
@@ -241,7 +241,7 @@ $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
 
 clear-host
-$ScriptVer = "Version 1.8"
+$ScriptVer = "Version 1.7"
 Write-host -object $ScriptVer -ForegroundColor "Cyan"
 $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 
