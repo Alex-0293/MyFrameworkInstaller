@@ -235,6 +235,8 @@ Function Set-FrameworkEnvironment {
     }
     return $true
 }
+$ScriptVer = "Version 1.7"
+Write-host -object $ScriptVer -ForegroundColor "Cyan"
 
 $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
@@ -260,7 +262,7 @@ if ( $step0 ){
                 Update-Environment
                 write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
                 Stop-Transcript
-                & pwsh.exe $MyFrameworkInstallerPath -root `"$Global:MyProjectFolderPath`"
+                & pwsh.exe $MyFrameworkInstallerPath -root "$($Env:USERPROFILE)\Documents\MyProjects"
             }
         }
     }
