@@ -48,7 +48,7 @@ Function Install-GIt {
     }
 
     if ( $InstallGit ) {
-        write-host "1. Install Git."
+        write-host "1. Install Git."  -ForegroundColor "DarkBlue"
         $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
         If ( $GitURI ) {
             if ( test-path -path $Global:GitFileName ){
@@ -76,7 +76,7 @@ Function Install-GIt {
 Function Set-MyFrameworkInstaller {
     [uri] $Global:MyFrameworkInstaller = "https://github.com/Alex-0293/MyFrameworkInstaller.git"
 
-    write-host "2. Clone my framework installer"
+    write-host "2. Clone my framework installer" -ForegroundColor "DarkBlue"
 
     Set-Location -Path $ProjectServicesFolderPath
     if ( test-path -path "$ProjectServicesFolderPath\MyFrameworkInstaller" ){
@@ -96,7 +96,7 @@ Function Set-MyFrameworkInstaller {
     }
 }
 Function Install-Powershell7 {
-    write-host "3. Check powershell version."
+    write-host "3. Check powershell version." -ForegroundColor "DarkBlue"
     $PSVer = [int16] $PSVersionTable.PSVersion.major
     write-host "    Powershel version [$PSVer]."
     if ( $PSVer -lt 5 ) {
