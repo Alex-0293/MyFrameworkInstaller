@@ -256,7 +256,8 @@ Function Install-Font{
         Unblock-File -path $Global:FileName
         $FontArchivePath = $Global:FileName.replace(".zip","")
         if ( test-path -path $FontArchivePath ){
-            Remove-Item -Path $FontArchivePath -recurse -Force
+            $res = Start-ProgramNew -Program "Remove-Item" -Command "Remove-Item -Path `"$FontArchivePath`" -recurse -Force" -RunAs
+            #Remove-Item -Path "$FontArchivePath" -recurse -Force
         }
         Expand-Archive -path $Global:FileName -DestinationPath $FontArchivePath
         $Res = Install-Fonts -FontFile "$FontArchivePath\TTF\CascadiaCodePL.ttf"

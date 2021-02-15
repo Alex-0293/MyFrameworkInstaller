@@ -451,8 +451,6 @@ Function Start-ProgramNew {
 
     if ( $PSO.Command ) {
         switch ( $PSO.Command.CommandType ) {
-            "Cmdlet" {
-            }
             "Application" {
                 if ( $PSO.Command.path ) { 
                     $ProgPath = $PSO.Command.path
@@ -504,9 +502,6 @@ Function Start-ProgramNew {
         }
         else { 
             switch ( $PSO.Command.CommandType ) {
-                "Cmdlet" {                    
-                }
-
                 "Application" {
                     $Params  = @{Program     = $PSO.Command.Source}
                     $Params += @{Arguments   = $Arguments -join " "}
