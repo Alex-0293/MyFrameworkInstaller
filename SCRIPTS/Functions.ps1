@@ -871,14 +871,14 @@ function Install-Fonts {
     )
     try {
         $FontFileName = split-path -path $FontFile  -Leaf
-        $FontFileNameWithoutExt = $FontFileName.Split(".")[1]
+        $FontFileNameWithoutExt = $FontFileName.Split(".")[0]
         If (!(Test-Path "c:\windows\fonts\$FontFileName")) {
-            $Extention = split-path -path $fontFile -extension
+            $Extention = $FontFileName.Split(".")[1]
             switch ( $Extention ) {
-                ".TTF" {
+                "TTF" {
                     $FontName = "$FontFileNameWithoutExt (TrueType)"
                 }
-                ".OTF" {
+                "OTF" {
                     $FontName = "$FontFileNameWithoutExt (OpenType)"
                 }
             }
