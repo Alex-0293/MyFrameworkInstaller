@@ -23,6 +23,7 @@
 Function Install-GIt {
     #Git
 
+    write-host "1. Check Git."  -ForegroundColor "Blue"
     #$Res = Install-Program -ProgramName "pwsh.exe" -Description "Powershell 7.x" -GitRepo "PowerShell/PowerShell" -FilePartX32 "*win-x32.msi" -FilePartX64 "*win-x64.msi" -OSBit $OSBit -Installer "msiexec" -InstallerArguments @('/i',"%FilePath%",'/qn','/promptrestart')
 
     $Release = Get-LatestGitHubRelease -Program "git-for-windows/git" -Stable
@@ -48,7 +49,7 @@ Function Install-GIt {
     }
 
     if ( $InstallGit ) {
-        write-host "1. Install Git."  -ForegroundColor "DarkBlue"
+        write-host "    Install Git."  -ForegroundColor "green"
         $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
         If ( $GitURI ) {
             if ( test-path -path $Global:GitFileName ){
@@ -76,7 +77,7 @@ Function Install-GIt {
 Function Set-MyFrameworkInstaller {
     [uri] $Global:MyFrameworkInstaller = "https://github.com/Alex-0293/MyFrameworkInstaller.git"
 
-    write-host "2. Clone my framework installer" -ForegroundColor "DarkBlue"
+    write-host "2. Clone my framework installer" -ForegroundColor "Blue"
 
     Set-Location -Path $ProjectServicesFolderPath
     if ( test-path -path "$ProjectServicesFolderPath\MyFrameworkInstaller" ){
@@ -96,7 +97,7 @@ Function Set-MyFrameworkInstaller {
     }
 }
 Function Install-Powershell7 {
-    write-host "3. Check powershell version." -ForegroundColor "DarkBlue"
+    write-host "3. Check powershell version." -ForegroundColor "Blue"
     $PSVer = [int16] $PSVersionTable.PSVersion.major
     write-host "    Powershel version [$PSVer]." -ForegroundColor "Green"
     if ( $PSVer -lt 5 ) {
