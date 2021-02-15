@@ -636,7 +636,7 @@ Function Install-Program {
 
             [uri] $ProgramURI = $Program.browser_download_url
             $Global:ProgramFileName = "$FileCashFolderPath\$(split-path -path $ProgramURI -Leaf)"
-            write-host "Prepare to install $Description [$(split-path -path $ProgramURI -Leaf)] size [$([math]::round($Program.size/ 1mb,2)) MB]."
+            write-host "    Prepare to install $Description [$(split-path -path $ProgramURI -Leaf)] size [$([math]::round($Program.size/ 1mb,2)) MB]." -ForegroundColor "Green"
             If ( $ProgramURI ) {
                 if ( test-path -path $Global:ProgramFileName ){
                     #Remove-Item -Path $Global:ProgramFileName
@@ -704,7 +704,7 @@ function Remove-FromStartUp {
         $UserStartUpFolderPath = "$($Env:APPDATA)\Microsoft\Windows\Start Menu\Programs\Startup"
 
         $ShorCutPath = "$UserStartUpFolderPath\$($ShortCutName).lnk"
-        write-host "Removing shortcut [$ShortCutName] from user startup folder"
+        write-host "Removing shortcut [$ShortCutName] from user startup folder" -ForegroundColor "Green"
         remove-item -path $ShorCutPath -Force -ErrorAction SilentlyContinue
     }
 }
@@ -737,4 +737,3 @@ function Install-CustomModule {
         Write-Host "Module [$name] on [$modulePath] already exist!" -ForegroundColor green
     }
 }
-

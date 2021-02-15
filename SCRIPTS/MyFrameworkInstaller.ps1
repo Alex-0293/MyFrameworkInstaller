@@ -26,15 +26,14 @@ param(
     [string] $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 )
 ################################# Script start here #################################
-    $ScriptVer = "1.7"
+    $ScriptVer = "Version 1.8"
     Write-host -object $ScriptVer -ForegroundColor "Cyan"
-    
     $FunctionFilePath = "$($Env:temp)\Functions.ps1"
     . $FunctionFilePath
 
     #remove it
     #$OSBit = 64
-    Stop-Transcript -ErrorAction SilentlyContinue
+    #Stop-Transcript -ErrorAction SilentlyContinue
 
     #$root = "$($Env:USERPROFILE)\Documents\MyProjects"
 
@@ -95,28 +94,34 @@ param(
         }
     }
 
+    $CodeCommand = Get-Command "Code" -ErrorAction SilentlyContinue
     $Answer = Get-Answer -Title "Do you want to configure VSCode? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
     if ( $Answer -eq "Y" ) {
         if ( $CodeCommand ) {
             write-host "4. Config VSCode."
 
-            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell extention."
+            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'shan.code-settings-sync') -Description "    Installing VSCode settings sync [shan.code-settings-sync] extention."
             # if ( $res.ErrorOutput ){
             #     write-host $res.ErrorOutput -ForegroundColor Red
             # }
 
-            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack extention."
+            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'ms-vscode.powershell') -Description "    Installing VSCode powershell [ms-vscode.powershell] extention."
             # if ( $res.ErrorOutput ){
             #     write-host $res.ErrorOutput -ForegroundColor Red
             # }
 
-            write-host "   create VSCode user config"
+            $res = Start-Program -Program "code" -Arguments @('--install-extension', 'pkief.material-icon-theme') -Description "    Installing VSCode icon pack [pkief.material-icon-theme] extention."
+            # if ( $res.ErrorOutput ){
+            #     write-host $res.ErrorOutput -ForegroundColor Red
+            # }
+
+            write-host "    create VSCode user config" -ForegroundColor "Green"
             Set-Content -path $Global:VSCodeConfigFilePath -Value $Global:VSCodeConfig -Force
 
-            write-host "   create MyProject folder"
+            write-host "    create MyProject folder" -ForegroundColor "Green"
             New-Item -Path $Global:MyProjectFolderPath -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
 
-            write-host "   create MyProject\Projects folder"
+            write-host "    create MyProject\Projects folder" -ForegroundColor "Green"
             New-Item -Path "$($Global:MyProjectFolderPath)\Projects" -ItemType Directory  -ErrorAction SilentlyContinue | Out-Null
 
             $StartVSCode = $True
@@ -236,7 +241,14 @@ param(
     if ( $StartVSCode ){
         Set-Location -Path $Global:MyProjectFolderPath
         & code "`"$($Global:MyProjectFolderPath)`""
-    }
+        $VSCodeConfig = Get-Content -path $Global:VSCodeConfigFilePath
+        
+        $VSCodeConfig = $VSCodeConfig | ConvertFrom-Json
+        $VSCodeConfig.sync.autoDownload  = $false
+        $VSCodeConfig.sync.forceDownload = $false
+        
+        $VSCodeConfig = $VSCodeConfig | ConvertTo-Json
+        $VSCodeConfig | Set-Content -Path $Global:VSCodeConfigFilePath    }
 
     Remove-FromStartUp -ShortCutName "MyFrameworkInstaller"
     Stop-Transcript

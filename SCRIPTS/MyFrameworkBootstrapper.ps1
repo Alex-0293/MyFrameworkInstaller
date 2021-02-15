@@ -98,7 +98,7 @@ Function Set-MyFrameworkInstaller {
 Function Install-Powershell7 {
     write-host "3. Check powershell version." -ForegroundColor "DarkBlue"
     $PSVer = [int16] $PSVersionTable.PSVersion.major
-    write-host "    Powershel version [$PSVer]."
+    write-host "    Powershel version [$PSVer]." -ForegroundColor "Green"
     if ( $PSVer -lt 5 ) {
         $Answer = Get-Answer -Title "Do you want to update host powershell version [$PSVer] to [5]? " -ChooseFrom "y","n" -DefaultChoose "y" -Color "Cyan","DarkMagenta" -AddNewLine
 

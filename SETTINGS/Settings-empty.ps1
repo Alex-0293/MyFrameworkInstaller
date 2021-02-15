@@ -18,10 +18,13 @@
 
 [string] $Global:VSCodeConfig = @"
 {
-    "files.encoding": "utf8bom"
+    "files.encoding": "utf8bom",
     "workbench.iconTheme": "material-icon-theme",
-    "powershell.integratedConsole.forceClearScrollbackBuffer": true
-    "editor.minimap.enabled": false
+    "powershell.integratedConsole.forceClearScrollbackBuffer": true,
+    "editor.minimap.enabled": false,
+    "sync.gist": "77bf85c28cd3bd32ee4b00442c6dbdeb",
+    "sync.autoDownload": true,
+    "sync.forceDownload": true
 }
 "@
 
