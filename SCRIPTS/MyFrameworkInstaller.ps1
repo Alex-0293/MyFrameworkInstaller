@@ -26,7 +26,9 @@ param(
     [string] $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 )
 ################################# Script start here #################################
-
+    $ScriptVer = "1.7"
+    Write-host -object $ScriptVer -ForegroundColor "Cyan"
+    
     $FunctionFilePath = "$($Env:temp)\Functions.ps1"
     . $FunctionFilePath
 
@@ -49,7 +51,6 @@ param(
         }
         write-host "Use cache file ["$FileCashFolderPath\Config.xml"]." -ForegroundColor "Green"
     }
-    
 
     $SettingsPath = "$MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
     . $SettingsPath
