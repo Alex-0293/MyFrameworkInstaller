@@ -245,7 +245,6 @@ $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 
 clear-host
 $ScriptVer = "Version 1.8"
-Write-host -object $ScriptVer -ForegroundColor "Cyan"
 $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 
 $Logs = Get-ChildItem -path $root -filter "*.log" -ErrorAction SilentlyContinue
@@ -255,6 +254,7 @@ if ( $logs ){
 
 $TransPath = "$root\MyFrameworkBootStrapper-$(Get-date -format 'dd.MM.yy HH-mm-ss').log"
 Start-Transcript -path $TransPath
+Write-host -object $ScriptVer -ForegroundColor "Cyan"
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
