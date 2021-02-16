@@ -264,7 +264,7 @@ Function Install-Font{
         if ( !(test-path -path $FontArchivePath) ){
             Expand-Archive -path $Global:FileName -DestinationPath $FontArchivePath
         }
-        
+
         $Res = Install-Fonts -FontFile "$FontArchivePath\TTF\CascadiaCodePL.ttf"
         #$res = Start-ProgramNew -Program $Global:FileName -Arguments '/silent' -Description "    Installing Font Cascadia Code PL." -RunAs
         if (!$res){
@@ -287,7 +287,7 @@ $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
 
 clear-host
-$ScriptVer = "Version 1.9"
+$ScriptVer = "Version 2.0"
 $root = "$($Env:USERPROFILE)\Documents\MyProjects"
 
 $Logs = Get-ChildItem -path $root -filter "*.log" -ErrorAction SilentlyContinue
