@@ -436,37 +436,43 @@ Function Start-ProgramNew {
     }
 
     $PSO = [PSCustomObject]@{
-        Programm    = $Program
+        Program     = $Program
         Arguments   = $Arguments
         Description = $Description
-        Command     = get-command $Program -ErrorAction SilentlyContinue
+        Command     = $null
         Object      = $null
         Output      = $null
         ErrorOutput = $null
+    }
+
+    if ( $Program ) {
+        $PSO.Command = get-command $Program -ErrorAction SilentlyContinue
     }
 
     if ( $Description ){
         write-host $Description -ForegroundColor Green
     }
 
-    if ( $PSO.Command ) {
-        switch ( $PSO.Command.CommandType ) {
-            "Application" {
-                if ( $PSO.Command.path ) { 
-                    $ProgPath = $PSO.Command.path
+    if ( $PSO.Command -or !$Program ) {
+        if ( $PSO.Command ) {
+            switch ( $PSO.Command.CommandType ) {
+                "Application" {
+                    if ( $PSO.Command.path ) {
+                        $ProgPath = $PSO.Command.path
+                    }
+                    Else {
+                        Write-host "Command [$Program] not found!" -ForegroundColor red
+                        exit 1
+                    }
                 }
-                Else {
-                    Write-host "Command [$Program] not found!" -ForegroundColor red
-                    exit 1
+                Default  {
+                    
                 }
-            }
-            Default  {
-                
             }
         }
 
-        #$Output      = "$($Env:temp)\Output.txt"
-        #$ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
+        $Output      = "$($Env:temp)\Output.txt"
+        $ErrorOutput = "$($Env:temp)\ErrorOutput.txt"
 
         switch ( $PSO.Command.name ) {
             "msiexec.exe" {
@@ -500,50 +506,48 @@ Function Start-ProgramNew {
         if ( $Evaluate ){
             $Res      = gsudo "Start-Process '$ProgPath' -Wait -PassThru -ArgumentList '$Arguments' -RedirectStandardOutput '$Output' -RedirectStandardError '$ErrorOutput'"
         }
-        else { 
-            switch ( $PSO.Command.CommandType ) {
-                "Application" {
-                    $Params  = @{Program     = $PSO.Command.Source}
-                    $Params += @{Arguments   = $Arguments -join " "}
-                    $Params += @{Wait        = $true}
-                    if ( $WorkDir ){
-                        $Params += @{ WorkDir = $WorkDir }
-                    }
-  
-                    if ( $RunAs ) {
-                        $Params += @{ Evaluate = $true }
-                    }
-                    Else {
-                        $Params += @{ Evaluate = $false }
-                    }                
-
-                    $Res = Start-ProgramProcess @Params
+        else {
+            if ( $PSO.Command ){
+                $Params  = @{Program     = $PSO.Command.Source}
+                $Params += @{Arguments   = $Arguments -join " "}
+                $Params += @{Wait        = $true}
+                if ( $WorkDir ){
+                    $Params += @{ WorkDir = $WorkDir }
                 }
-                Default {
-                    $Command = $Command.Replace("`"","`"`"`"")
 
-                    $PowershellArguments = ""
-                    $PowershellArguments += " -NonInteractive -NoLogo"
-                    $PowershellArguments += " -ExecutionPolicy Bypass –NoProfile -Command `"& {$Command}`""
+                if ( $RunAs ) {
+                    $Params += @{ Evaluate = $true }
+                }
+                Else {
+                    $Params += @{ Evaluate = $false }
+                }                
 
-                    $Powershell = "Powershell.exe"
+                $Res = Start-ProgramProcess @Params
+            }
+            Else{
+                $Command = $Command.Replace("`"","`"`"`"")
+
+                $PowershellArguments = ""
+                $PowershellArguments += " -NonInteractive -NoLogo"
+                $PowershellArguments += " -ExecutionPolicy Bypass –NoProfile -Command `"& {$Command}`""
+
+                $Powershell = "powershell.exe"
+            
+                $Params = @{
+                    Program        = $Powershell
+                    Arguments      = $PowershellArguments
+                    Wait           = $true
+                }
+
+                if ( $WorkDir ){
+                    $Params += @{ WorkDir = $WorkDir }
+                }
+
+                if ( $RunAs ) {
+                    $Params += @{ Evaluate = $true }
+                } 
                 
-                    $Params = @{
-                        Program        = $Powershell
-                        Arguments      = $PowershellArguments
-                        Wait           = $true                        
-                    }
-
-                    if ( $WorkDir ){
-                        $Params += @{ WorkDir = $WorkDir }  
-                    }
-
-                    if ( $RunAs ) {
-                        $Params += @{ Evaluate = $true }                    
-                    } 
-                    
-                    $Res = Start-ProgramProcess @Params
-                }
+                $Res = Start-ProgramProcess @Params
             }
         }
 
@@ -552,9 +556,9 @@ Function Start-ProgramNew {
 
             if ( !$Evaluate ) {
                 $PSO.Object = $res
-                $PSO.output = $res.StandardOutput.ReadToEnd() 
+                $PSO.output = $res.StandardOutput.ReadToEnd()
                 #Remove-Item -path $Output -Force -ErrorAction SilentlyContinue
-                $PSO.ErrorOutput = $res.StandardError.ReadToEnd() 
+                $PSO.ErrorOutput = $res.StandardError.ReadToEnd()
                 #Remove-Item -path $ErrorOutput -Force -ErrorAction SilentlyContinue
 
                 switch ( $PSO.Command.name ) {
@@ -575,7 +579,12 @@ Function Start-ProgramNew {
 
                 switch ( $Res.ExitCode ) {
                     0 {
-                        Write-host "    Successfully finished." -ForegroundColor green
+                        if ( ! $PSO.ErrorOutput ){
+                            Write-host "    Successfully finished." -ForegroundColor green
+                        }
+                        Else{
+                            Write-host $PSO.ErrorOutput
+                        }
                     }
                     Default {
                         if ( $PSO.ErrorOutput ) {
@@ -718,12 +727,16 @@ Function Install-Program {
         [string]   $ProgramName,
         [string]   $Description,
         [string]   $GitRepo,
+        [URI]      $DownloadURIx32,
+        [URI]      $DownloadURIx64,
         [string]   $FilePartX32,
         [string]   $FilePartX64,
         [string]   $OSBit,
         [switch]   $RunAs,
         [string]   $Installer,
         [string[]] $InstallerArguments,
+        [string]   $TempFileFolder = $Env:TEMP,
+        [switch]   $DontRemoveTempFiles,
         [switch]   $Force
     )
 
@@ -734,7 +747,7 @@ Function Install-Program {
     Else {
         $IsInstalled = $False
     }
-
+    #$IsInstalled = $False
     if ( !$IsInstalled ) {
         if ( $Force ){
             $Answer = "Y"
@@ -744,45 +757,78 @@ Function Install-Program {
         }
         
         if ( $Answer -eq "Y" ) {
-            $Release = Get-LatestGitHubRelease -Program $GitRepo -Stable
-            "PowerShell/PowerShell"
-            switch ($OSBit) {
-                "32" {  
-                    $global:Program   = $Release.assets | Where-Object {$_.name -like "*$FilePartX32"}
+            if ( $GitRepo ){
+                $Release = Get-LatestGitHubRelease -Program $GitRepo -Stable
+                $GitRepo
+                switch ($OSBit) {
+                    "32" {  
+                        $global:Program   = $Release.assets | Where-Object {$_.name -like "*$FilePartX32"}
+                    }
+                    "64" {  
+                        $global:Program   = $Release.assets | Where-Object {$_.name -like "*$FilePartX64"}
+                    }
+                    Default {}
                 }
-                "64" {  
-                    $global:Program   = $Release.assets | Where-Object {$_.name -like "*$FilePartX64"}
+                $ProgramSize = $Program.size
+                [uri] $ProgramURI = $Program.browser_download_url
+            }
+            Else {
+                switch ($OSBit) {
+                    "32" {  
+                        $ProgramURI   = $DownloadURIx32
+                    }
+                    "64" {  
+                        $ProgramURI   = $DownloadURIx64
+                    }
+                    Default {}
                 }
-                Default {}
+                $ProgramURI  = [System.Net.HttpWebRequest]::Create( $ProgramURI ).GetResponse()
+                $ProgramSize = $ProgramURI.contentLength
+                [uri] $ProgramURI  = $ProgramURI.ResponseUri.AbsoluteUri               
             }
 
-            [uri] $ProgramURI = $Program.browser_download_url
-            $Global:ProgramFileName = "$FileCashFolderPath\$(split-path -path $ProgramURI -Leaf)"
-            write-host "    Prepare to install $Description [$(split-path -path $ProgramURI -Leaf)] size [$([math]::round($Program.size/ 1mb,2)) MB]." -ForegroundColor "Green"
+            
+            $ProgramFileName = "$TempFileFolder\$(split-path -path $ProgramURI -Leaf)"
+            write-host "    Prepare to install $Description [$(split-path -path $ProgramURI -Leaf)] size [$([math]::round($ProgramSize/ 1mb,2)) MB]." -ForegroundColor "Green"
             If ( $ProgramURI ) {
-                if ( test-path -path $Global:ProgramFileName ){
+                if ( test-path -path $ProgramFileName ){
                     #Remove-Item -Path $Global:ProgramFileName
                 }
                 Else {
-                    Invoke-WebRequest -Uri $ProgramURI -OutFile $Global:ProgramFileName
+                    Invoke-WebRequest -Uri $ProgramURI -OutFile $ProgramFileName
                 }
 
-                if ( test-path -path $Global:ProgramFileName ){
-                    Unblock-File -path $Global:ProgramFileName
+                if ( test-path -path $ProgramFileName ){
+                    Unblock-File -path $ProgramFileName
                     $ReplacedInstallerArguments = @()
                     foreach( $item in $InstallerArguments ){
-                        $ReplacedInstallerArguments += $item.replace("%FilePath%",$Global:ProgramFileName)
+                        $ReplacedInstallerArguments += $item.replace("%FilePath%",$ProgramFileName)
                     }
 
-                    if ( $RunAs ){
-                        $res = Start-ProgramNew -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description." -RunAs
+                    $Param  = @{}
+                    $Param += @{ Arguments   = $ReplacedInstallerArguments }
+                    $Param += @{ Description = "    Installing $Description." }
+
+                    if ( $Installer ){
+                        $Param += @{ Program  = $Installer }
                     }
                     Else {
-                        $res = Start-ProgramNew -Program $Installer -Arguments $ReplacedInstallerArguments -Description "    Installing $Description."
+                        $Param += @{ Program  = $ProgramFileName }
+                    }
+                    if ( $RunAs ){
+                        $Param += @{ RunAs = $true }
+                    }
+                    $Res = Start-ProgramNew @Param
+                    if ( !$res.ErrorOutput ) {
+                        $res = $true
+                    }
+                    Else {
+                        $res = $false
                     }
                 }
                 Else {
-                    Write-Host "Error downloading file [$Global:ProgramFileName]!" -ForegroundColor Red
+                    Write-Host "Error downloading file [$ProgramFileName]!" -ForegroundColor Red
+                    $res = $false
                 }
             }
         }
@@ -842,21 +888,22 @@ function Install-CustomModule {
         if ((test-path "$ModulePath")){
             Set-Location -path $ModulePath
             if ( $Evaluate ){
-                $res = Start-ProgramNew -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]." -Evaluate
+                $res = Start-ProgramNew -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]." -Evaluate -WorkDir $ModulePath
+                #$res = Start-ProgramNew -command "& git clone `"$ModuleURI`"" -Description "    Git clone [$ModuleURI]." -RunAs -WorkDir $ModulePath
             }
             Else {
-                $res = Start-ProgramNew -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]."
+                $res = Start-ProgramNew -Program "git" -Arguments @('clone', $ModuleURI ) -Description "    Git clone [$ModuleURI]." -WorkDir $ModulePath
             }
             if ( $res.ErrorOutput -eq "fatal: destination path 'MyFrameworkInstaller' already exists and is not an empty directory." ){
                 Write-host "    Folder already exist." -ForegroundColor yellow
             }
         }
         Else {
-            Write-Host "Path [$ModulePath] not found!" -ForegroundColor red
+            Write-Host "    Path [$ModulePath] not found!" -ForegroundColor red
         }
     }
     Else {
-        Write-Host "Module [$name] on [$modulePath] already exist!" -ForegroundColor green
+        Write-Host "    Module [$name] on [$modulePath] already exist!" -ForegroundColor green
     }
 }
 function Install-Fonts {

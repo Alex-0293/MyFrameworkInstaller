@@ -9,8 +9,8 @@
 [uri] $Global:AlexKBuildToolsModuleURL = "https://github.com/Alex-0293/AlexKBuildTools"
 
 #VSCode
-[uri] $global:VSCode64URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user"
-[uri] $global:VSCode32URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-user"
+[uri] $global:VSCode64URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64"
+[uri] $global:VSCode32URI       = "https://code.visualstudio.com/sha/download?build=stable&os=win32"
 
 [bool]  $Global:LocalSettingsSuccessfullyLoaded  = $true
 
@@ -18,13 +18,10 @@
 
 [string] $Global:VSCodeConfig = @"
 {
-    "files.encoding": "utf8bom",
+    "files.encoding": "utf8bom"
     "workbench.iconTheme": "material-icon-theme",
-    "powershell.integratedConsole.forceClearScrollbackBuffer": true,
-    "editor.minimap.enabled": false,
-    "sync.gist": "77bf85c28cd3bd32ee4b00442c6dbdeb",
-    "sync.autoDownload": true,
-    "sync.forceDownload": true
+    "powershell.integratedConsole.forceClearScrollbackBuffer": true
+    "editor.minimap.enabled": false
 }
 "@
 

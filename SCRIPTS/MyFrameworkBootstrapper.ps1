@@ -52,14 +52,20 @@ Function Install-GIt {
         write-host "    Install Git."  -ForegroundColor "green"
         $GitURI = (Get-Variable -name "Git$($OSBit)URI").value
         If ( $GitURI ) {
+            $ProgramURI  = [System.Net.HttpWebRequest]::Create( $GitURI ).GetResponse()
+            $ProgramSize = $ProgramURI.contentLength
+            [uri] $GitURI  = $ProgramURI.ResponseUri.AbsoluteUri   
+            $Global:GitFileName = "$($Global:FileCashFolderPath)\$(split-path -path $GitURI -Leaf)"
+
             if ( test-path -path $Global:GitFileName ){
                # Remove-Item -Path $Global:GitFileName
             }
+            
 
             Invoke-WebRequest -Uri $GitURI -OutFile $Global:GitFileName
             if ( test-path -path $Global:GitFileName ){
                 Unblock-File -path $Global:GitFileName
-                $res = Start-ProgramNew -Program $Global:GitFileName -Arguments '/silent' -Description "    Installing Git." -RunAs
+                $res = Start-ProgramNew -Program $Global:GitFileName -Arguments '/silent' -Description "    Installing Git [$(split-path -path $GitURI -Leaf)] file size [$ProgramSize]." -RunAs
                 if (!$res){
                     exit 1
                 }
