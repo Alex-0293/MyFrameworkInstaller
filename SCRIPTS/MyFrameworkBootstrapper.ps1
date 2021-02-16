@@ -243,45 +243,7 @@ Function Set-FrameworkEnvironment {
     }
     return $true
 }
-Function Install-Font{
-    write-host "4. Install font." -ForegroundColor "Blue"
-    $Release = Get-LatestGitHubRelease -Program "microsoft/cascadia-code" -Stable
 
-    [uri] $global:FontURI     = ($Release.assets | Where-Object {$_.name -like "CascadiaCode*"}).browser_download_url
-    [string] $Global:FileName = "$($Global:FileCashFolderPath)\$($Release.assets.name)"
-
-    if ( test-path -path $Global:FileName ){
-        # Remove-Item -Path $Global:GitFileName
-    }
-    Else {
-       Invoke-WebRequest -Uri $FontURI -OutFile $Global:FileName
-    }
-
-    
-    if ( test-path -path $Global:FileName ){
-        Unblock-File -path $Global:FileName
-        $FontArchivePath = $Global:FileName.replace(".zip","")
-        if ( !(test-path -path $FontArchivePath) ){
-            Expand-Archive -path $Global:FileName -DestinationPath $FontArchivePath
-        }
-
-        $Res = Install-Fonts -FontFile "$FontArchivePath\TTF\CascadiaCodePL.ttf"
-        #$res = Start-ProgramNew -Program $Global:FileName -Arguments '/silent' -Description "    Installing Font Cascadia Code PL." -RunAs
-        if (!$res){
-            exit 1
-        }
-        Update-Environment
-        return $true
-    }
-    Else {
-        Write-Host "Error downloading file [$Global:FileName]!" -ForegroundColor Red
-        return $false
-    }
-
-    
-
-    
-}
 
 $FunctionFilePath = "$($Env:temp)\Functions.ps1"
 . $FunctionFilePath
@@ -309,13 +271,10 @@ if ( $step0 ){
         if ( $step2 ){
             $Step3 = Install-Powershell7
             if ( $step3 ) {
-                $step4 = Install-Font
-                if ( $step4 ) {
-                    $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
-                    write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
-                    Stop-Transcript
-                    & pwsh.exe $MyFrameworkInstallerPath -root "$($Env:USERPROFILE)\Documents\MyProjects"
-                }
+                $MyFrameworkInstallerPath = "$ProjectServicesFolderPath\MyFrameworkInstaller\SCRIPTS\MyFrameworkInstaller.ps1"
+                write-host "Starting [$MyFrameworkInstallerPath]." -ForegroundColor Green
+                Stop-Transcript
+                & pwsh.exe $MyFrameworkInstallerPath -root "$($Env:USERPROFILE)\Documents\MyProjects"
             }
         }
     }

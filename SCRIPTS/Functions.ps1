@@ -504,7 +504,14 @@ Function Start-ProgramNew {
 
         #$PSO.Arguments = $Arguments
         if ( $Evaluate ){
-            $Res      = gsudo "Start-Process '$ProgPath' -Wait -PassThru -ArgumentList '$Arguments' -RedirectStandardOutput '$Output' -RedirectStandardError '$ErrorOutput'"
+            if ( $Arguments -and $ProgPath) {
+                $Res      = gsudo "Start-Process '$ProgPath' -Wait -PassThru -ArgumentList '$Arguments' -RedirectStandardOutput '$Output' -RedirectStandardError '$ErrorOutput'"
+            }
+            Else {
+                $Command = $Command.Replace("`"","`"`"`"")
+                $Res      = gsudo "$Command"
+            }
+            
         }
         else {
             if ( $PSO.Command ){
@@ -926,9 +933,11 @@ function Install-Fonts {
             }
             
 
-            $res = Start-ProgramNew -Program "Copy-Item" -Command "Copy-Item -Path `"$FontFile`" -Destination `"C:\Windows\Fonts\$FontFileName`" -Force" -RunAs
+            #$res = Start-ProgramNew -Command "Copy-Item -Path `"$FontFile`" -Destination `"C:\Windows\Fonts\$FontFileName`" -Force" -RunAs
+            $res = Start-ProgramNew -Command "Copy-Item -Path `"$FontFile`" -Destination `"C:\Windows\Fonts\$FontFileName`" -Force" -Evaluate
             
-            $res1 = Start-ProgramNew -Program "New-ItemProperty" -Command "New-ItemProperty -Name `"$FontName`" -Path `"HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts`" -PropertyType string -Value `"$FontFileName`"" -RunAs
+            #$res1 = Start-ProgramNew -Command "New-ItemProperty -Name `"$FontName`" -Path `"HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts`" -PropertyType string -Value `"$FontFileName`"" -RunAs
+            $res = Start-ProgramNew -Command "New-ItemProperty -Name `"$FontName`" -Path `"HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts`" -PropertyType string -Value `"$FontFileName`" -Force" -Evaluate
 
             if ( $res -and $res1 ){
                 return $true

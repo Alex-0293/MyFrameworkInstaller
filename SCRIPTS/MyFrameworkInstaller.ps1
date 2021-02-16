@@ -357,7 +357,74 @@ param(
                 return $res
             }
     }
+    Function Install-Font {
+        write-host "4.2. Install font." -ForegroundColor "Blue"
+        $Release = Get-LatestGitHubRelease -Program "microsoft/cascadia-code" -Stable
+    
+        [uri] $global:FontURI     = ($Release.assets | Where-Object {$_.name -like "CascadiaCode*"}).browser_download_url
+        [string] $Global:FileName = "$($Global:FileCashFolderPath)\$($Release.assets.name)"
+    
+        if ( test-path -path $Global:FileName ){
+            # Remove-Item -Path $Global:GitFileName
+        }
+        Else {
+           Invoke-WebRequest -Uri $FontURI -OutFile $Global:FileName
+        }
+    
+        
+        if ( test-path -path $Global:FileName ){
+            Unblock-File -path $Global:FileName
+            $FontArchivePath = $Global:FileName.replace(".zip","")
+            if ( !(test-path -path $FontArchivePath) ){
+                Expand-Archive -path $Global:FileName -DestinationPath $FontArchivePath
+            }
+            
+            $Res = Install-Fonts -FontFile "$FontArchivePath\TTF\CascadiaCodePL.ttf"
 
+            # if (!$res){
+            #     exit 1
+            # }
+            Update-Environment
+            return $true
+        }
+        Else {
+            Write-Host "Error downloading file [$Global:FileName]!" -ForegroundColor Red
+            return $false
+        }
+    
+        
+    
+        
+    }
+    Function Install-Gsudo {
+        <#
+            .DESCRIPTION
+                Install gsudo utility for evaluate.
+        #>
+            [OutputType([bool])]
+            [CmdletBinding()]
+            Param(
+
+            )
+            begin {
+                write-host "4.1 Install Gsudo." -ForegroundColor "Blue"
+                $res = $false
+            }
+            process {
+                if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
+                    Set-ExecutionPolicy RemoteSigned -Scope Process
+                    $GSudoInstall = Invoke-WebRequest -UseBasicParsing $Global:GSudoInstallURL
+                    Invoke-Expression $GSudoInstall
+                    Update-Environment
+                }
+
+                $res = $true
+            }
+            end {
+                return $res
+            }
+    }
+    
     #remove it
     #$OSBit = 64
     #Stop-Transcript -ErrorAction SilentlyContinue
@@ -386,29 +453,28 @@ param(
     $SettingsPath      = "$MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings.ps1"
     $EmptySettingsPath = "$MyProjectFolderPath\ProjectServices\MyFrameworkInstaller\SETTINGS\Settings-empty.ps1"
     Copy-Item -Path $EmptySettingsPath -Destination $SettingsPath
-    . $SettingsPath
+    . $SettingsPath    
 
-    if (-not (get-command "gsudo" -ErrorAction SilentlyContinue)) {
-        Set-ExecutionPolicy RemoteSigned -Scope Process
-        $GSudoInstall = Invoke-WebRequest -UseBasicParsing $Global:GSudoInstallURL
-        Invoke-Expression $GSudoInstall
-        Update-Environment
-    }
-
-    $step5 = install-VSCode
-    if ( $step5 ){
-        Update-Environment
-        $step6 = Initialize-VSCode
-        if ( $step6 ){
-            $Step7 = Initialize-Folders
-            if ( $Step7 ){
-                $Step8 = Initialize-GlobalSettings -ProjectsFolderPath "$MyProjectFolderPath\Projects"
-                if ( $step8 ){
-                    $step9 = Install-PowershellModules
-                    if ( $step9 ){
-                        $step10 = Import-PowershellModules
-                        if ( $step10 ){
-                            $step11 = Initialize-GitHubRepositoryClone
+    $Step41 = Install-Gsudo
+    if ( $Step41 ) {
+        $Step42 = Install-Font
+        if ( $step42 ){
+            $step5 = install-VSCode
+            if ( $step5 ){
+                Update-Environment
+                $step6 = Initialize-VSCode
+                if ( $step6 ){
+                    $Step7 = Initialize-Folders
+                    if ( $Step7 ){
+                        $Step8 = Initialize-GlobalSettings -ProjectsFolderPath "$MyProjectFolderPath\Projects"
+                        if ( $step8 ){
+                            $step9 = Install-PowershellModules
+                            if ( $step9 ){
+                                $step10 = Import-PowershellModules
+                                if ( $step10 ){
+                                    $step11 = Initialize-GitHubRepositoryClone
+                                }
+                            }
                         }
                     }
                 }
