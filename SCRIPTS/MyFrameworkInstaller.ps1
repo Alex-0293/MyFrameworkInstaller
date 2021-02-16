@@ -40,7 +40,7 @@ param(
             write-host "5. Install VSCode." -ForegroundColor "Blue"
         }
         process {            
-            $Res = Install-Program -ProgramName "code" -Description "VSCode" -DownloadURIx32 $global:VSCode32URI -DownloadURIx64 $global:VSCode64URI -OSBit $OSBit -RunAs -force -TempFileFolder $FileCashFolderPath -DontRemoveTempFiles
+            $Res = Install-Program -ProgramName "code" -Description "VSCode" -DownloadURIx32 $global:VSCode32URI -DownloadURIx64 $global:VSCode64URI -OSBit $OSBit -RunAs -force -TempFileFolder $FileCashFolderPath -DontRemoveTempFiles -InstallerArguments @("/VERYSILENT", "/MERGETASKS=!runcode")
         }
         end {
             return $res
