@@ -286,7 +286,7 @@ param(
                 $NewProfile = @"
                 Import-Module posh-git
                 Import-Module oh-my-posh
-                Set-Theme Paradox
+                Set-PoshPrompt -Theme paradox
 "@
 
                 $NewProfile | Set-Content -path $profile
